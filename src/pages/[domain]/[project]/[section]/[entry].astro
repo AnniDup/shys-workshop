@@ -1,0 +1,270 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Breadcrumb from '../../../../components/Breadcrumb.astro';
+import Figure from '../../../../components/Figure.astro';
+import SheetNav from '../../../../components/SheetNav.astro';
+import Base from '../../../../layouts/Base.astro';
+import { domains, sections, type PartSection } from '../../../../config/taxonomy';
+import {
+  arcSlugOf,
+  arcsFeaturing,
+  getAdventure,
+  partSlugOf,
+  type Arc,
+  type Part,
+} from '../../../../lib/adventure';
+import { getDocsFor, getProjects, type Doc, type Project } from '../../../../lib/content';
+import { url } from '../../../../lib/url';
+
+// Pages for each arc, and for each NPC, location and item that isn't brief.
+export const getStaticPaths = (async () => {
+  const paths = [];
+  for (const project of await getProjects()) {
+    const adventure = await getAdventure(project.id);
+    const docs = await getDocsFor(project.id);
+    const params = { domain: project.data.domain, project: project.id };
+    for (const arc of adventure.arcs) {
+      paths.push({
+        params: { ...params, section: 'arcs', entry: arcSlugOf(arc) },
+        props: { project, docs, arc, part: undefined },
+      });
+    }
+    for (const section of ['npcs', 'locations', 'items'] as PartSection[]) {
+      for (const part of adventure[section].filter((p) => !p.data.brief)) {
+        paths.push({
+          params: { ...params, section, entry: partSlugOf(part) },
+          props: { project, docs, arc: undefined, part },
+        });
+      }
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+interface Props {
+  project: Project;
+  docs: Doc[];
+  arc?: Arc;
+  part?: Part;
+}
+const { project, docs, arc, part } = Astro.props;
+const section = Astro.params.section as keyof typeof sections;
+const entry = (arc ?? part)!;
+const { Content, headings } = await render(entry);
+const adventure = await getAdventure(project.id);
+const base = `/${project.data.domain}/${project.id}`;
+
+// Link to an NPC, location or item: its own page, or its section list if it's brief.
+const partHref = (s: PartSection, slug: string) => {
+  const found = adventure[s].find((p) => partSlugOf(p) === slug);
+  return found && !found.data.brief ? url(`${base}/${s}/${slug}`) : url(`${base}/${s}`);
+};
+const partTitle = (s: PartSection, slug: string) =>
+  adventure[s].find((p) => partSlugOf(p) === slug)?.data.title ?? slug;
+
+// Arcs: position, scene list (from ## headings), and what they feature.
+const arcIndex = arc ? adventure.arcs.findIndex((a) => a.id === arc.id) : -1;
+const prevArc = arc ? adventure.arcs[arcIndex - 1] : undefined;
+const nextArc = arc ? adventure.arcs[arcIndex + 1] : undefined;
+const scenes = headings.filter((h) => h.depth === 2);
+const featured = arc
+  ? (['npcs', 'locations', 'items'] as PartSection[])
+      .map((s) => ({ section: s, slugs: arc.data[s] }))
+      .filter((g) => g.slugs.length > 0)
+  : [];
+
+// Parts: the arcs they appear in.
+const appearsIn = part ? arcsFeaturing(adventure, part) : [];
+---
+
+<Base title={`${entry.data.title} | ${project.data.title}`} description={entry.data.summary}>
+  <Breadcrumb
+    items={[
+      { label: domains[project.data.domain].label, href: `/${project.data.domain}` },
+      { label: project.data.title, href: base },
+      { label: sections[section].label, href: `${base}/${section}` },
+      { label: entry.data.title },
+    ]}
+  />
+
+  <header class="head">
+    <p class="label">
+      {arc ? `Arc ${arcIndex + 1} of ${adventure.arcs.length}` : sections[section].single}
+    </p>
+    <h1>{entry.data.title}</h1>
+    {entry.data.summary && <p class="summary">{entry.data.summary}</p>}
+  </header>
+
+  <div class="layout">
+    <SheetNav project={project} docs={docs} current={`${section}/${Astro.params.entry}`} />
+
+    <article>
+      {
+        arc && (scenes.length > 0 || featured.length > 0) && (
+          <div class="panels">
+            {scenes.length > 0 && (
+              <nav class="panel" aria-label="Scenes">
+                <h2 class="label">Scenes</h2>
+                <ol class="scenes">
+                  {scenes.map((h, i) => (
+                    <li>
+                      <a href={`#${h.slug}`}>
+                        <span class="num">{String(i + 1).padStart(2, '0')}</span>
+                        {h.text}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )}
+            {featured.length > 0 && (
+              <section class="panel">
+                <h2 class="label">Featuring</h2>
+                <dl class="featured">
+                  {featured.map((g) => (
+                    <div>
+                      <dt class="label">{sections[g.section].label}</dt>
+                      <dd>
+                        {g.slugs.map((slug) => (
+                          <a href={partHref(g.section, slug)}>{partTitle(g.section, slug)}</a>
+                        ))}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
+          </div>
+        )
+      }
+
+      {part && part.data.images.length > 0 && (
+        <div class="images">
+          {part.data.images.map((img) => <Figure image={img} sizes="(max-width: 800px) 100vw, 560px" />)}
+        </div>
+      )}
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      {
+        part && appearsIn.length > 0 && (
+          <section class="panel">
+            <h2 class="label">Appears In</h2>
+            <ul class="appears">
+              {appearsIn.map((a) => (
+                <li>
+                  <a href={url(`${base}/arcs/${arcSlugOf(a)}`)}>{a.data.title}</a>
+                  {a.data.summary && <span class="s">{a.data.summary}</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      {
+        arc && (
+          <nav class="pager" aria-label="Previous and next arc">
+            {prevArc ? (
+              <a href={url(`${base}/arcs/${arcSlugOf(prevArc)}`)}>
+                <span class="label">Previous arc</span>
+                {prevArc.data.title}
+              </a>
+            ) : (
+              <span />
+            )}
+            {nextArc && (
+              <a class="nx" href={url(`${base}/arcs/${arcSlugOf(nextArc)}`)}>
+                <span class="label">Next arc</span>
+                {nextArc.data.title}
+              </a>
+            )}
+          </nav>
+        )
+      }
+    </article>
+  </div>
+</Base>
+
+<style>
+  .head {
+    margin: var(--space-3) 0 var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+  .head .label { color: var(--brand-hi); }
+  .head h1 { margin-top: var(--space-2); }
+  .summary { color: var(--text-muted); margin-top: var(--space-2); max-width: var(--prose-max); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+  article { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-4);
+    max-width: var(--prose-max);
+  }
+  .panel {
+    background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--brand);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+  }
+  .panel h2 { color: var(--brand-hi); margin-bottom: var(--space-3); letter-spacing: var(--tracking-label); }
+
+  .scenes { list-style: none; display: grid; gap: 2px; }
+  .scenes a {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-1) 0;
+    font-size: var(--text-sm);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .scenes a:hover { color: var(--brand-hi); }
+  .num { font: var(--text-xs) var(--font-mono); color: var(--brand); padding-top: 2px; }
+
+  .featured { display: grid; gap: var(--space-3); }
+  .featured dd { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); margin-top: var(--space-1); }
+
+  .images {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+  }
+
+  /* Scene headings read like chapter breaks. */
+  .prose :global(h2) {
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 90px;
+  }
+
+  .appears { list-style: none; display: grid; gap: var(--space-2); }
+  .appears li { display: grid; gap: 2px; }
+  .appears .s { color: var(--text-muted); font-size: var(--text-sm); }
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+  .pager a { display: flex; flex-direction: column; gap: var(--space-1); text-decoration: none; color: var(--text-bright); }
+  .pager .nx { text-align: right; margin-left: auto; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+</style>

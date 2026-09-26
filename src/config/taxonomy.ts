@@ -115,9 +115,6 @@ export const releasedStatuses: Status[] = ['maintained', 'unmaintained'];
 export const docTypes = {
   premise: 'Premise',
   chapter: 'Chapter',
-  locations: 'Locations',
-  npcs: 'NPCs',
-  items: 'Items',
   gallery: 'Gallery',
   design: 'Design',
   concept: 'Concept',
@@ -127,6 +124,16 @@ export const docTypes = {
   log: 'Log',
 } as const;
 export type DocType = keyof typeof docTypes;
+
+// Adventure sections: folders inside a Tabletop project, each file its own entry.
+export const sections = {
+  arcs: { label: 'Arcs', single: 'Arc' },
+  npcs: { label: 'NPCs', single: 'NPC' },
+  locations: { label: 'Locations', single: 'Location' },
+  items: { label: 'Items', single: 'Item' },
+} as const;
+export type Section = keyof typeof sections;
+export type PartSection = Exclude<Section, 'arcs'>;
 
 // AI usage: how much AI was involved in making the project.
 export const aiLevels = {

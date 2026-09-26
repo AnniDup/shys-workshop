@@ -1,3 +1,10 @@
+## 0.11.0 (26 Sep 2026)
+
+- Adventures now have arcs, NPCs, locations and items, one file each.
+- Arcs read like chapters, with scenes as headings and a scene list at the top.
+- NPCs, locations and items can be brief (shown in the list) or have their own page, with an Appears In panel.
+- Removed the NPCs, locations and items sheet types, replaced by the new folders.
+
 ## 0.10.0 (26 Sep 2026)
 
 - Renamed the Rules kind to Rulebook.

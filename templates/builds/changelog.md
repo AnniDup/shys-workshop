@@ -17,11 +17,11 @@
 # The build fails if a heading doesn't match these forms.
 #
 # ------Example------
-# ## 0.1.0 (26 Sep 2026)
+# ## Unreleased
 #
 # - Entry for this version
 #
-# ## Unreleased
+# ## 0.1.0 (26 Sep 2026)
 #
 # - Project page set up.
 ---

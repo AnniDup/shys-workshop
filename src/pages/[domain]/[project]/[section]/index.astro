@@ -1,0 +1,147 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Breadcrumb from '../../../../components/Breadcrumb.astro';
+import SheetNav from '../../../../components/SheetNav.astro';
+import Base from '../../../../layouts/Base.astro';
+import { domains, sections, type Section } from '../../../../config/taxonomy';
+import { arcSlugOf, getAdventure, partSlugOf } from '../../../../lib/adventure';
+import { getDocsFor, getProjects } from '../../../../lib/content';
+import { url } from '../../../../lib/url';
+
+// One list page per section an adventure has: /<domain>/<project>/arcs, /npcs, ...
+export const getStaticPaths = (async () => {
+  const paths = [];
+  for (const project of await getProjects()) {
+    const adventure = await getAdventure(project.id);
+    for (const section of Object.keys(sections) as Section[]) {
+      if (adventure[section].length === 0) continue;
+      paths.push({
+        params: { domain: project.data.domain, project: project.id, section },
+        props: { project, section, docs: await getDocsFor(project.id) },
+      });
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { project, section, docs } = Astro.props;
+const adventure = await getAdventure(project.id);
+const base = `/${project.data.domain}/${project.id}`;
+const label = sections[section as Section].label;
+
+// Arcs link to their pages. Parts: brief ones show in full here, others link to their page.
+const entries = await Promise.all(
+  section === 'arcs'
+    ? adventure.arcs.map(async (a, i) => ({
+        title: a.data.title,
+        summary: a.data.summary,
+        href: url(`${base}/arcs/${arcSlugOf(a)}`),
+        marker: `A${i + 1}`,
+        Content: undefined,
+      }))
+    : adventure[section as 'npcs' | 'locations' | 'items'].map(async (p) => ({
+        title: p.data.title,
+        summary: p.data.summary,
+        href: p.data.brief ? undefined : url(`${base}/${section}/${partSlugOf(p)}`),
+        marker: undefined,
+        Content: p.data.brief ? (await render(p)).Content : undefined,
+      })),
+);
+---
+
+<Base title={`${label} | ${project.data.title}`}>
+  <Breadcrumb
+    items={[
+      { label: domains[project.data.domain].label, href: `/${project.data.domain}` },
+      { label: project.data.title, href: base },
+      { label },
+    ]}
+  />
+
+  <header class="head">
+    <p class="label">{entries.length} {entries.length === 1 ? sections[section as Section].single : label}</p>
+    <h1>{label}</h1>
+  </header>
+
+  <div class="layout">
+    <SheetNav project={project} docs={docs} current={section} />
+
+    <ol class="entries">
+      {
+        entries.map((e) => (
+          <li class:list={['entry', { brief: !!e.Content }]}>
+            {e.href ? (
+              <a class="link" href={e.href}>
+                {e.marker && <span class="marker">{e.marker}</span>}
+                <span class="text">
+                  <span class="title">{e.title}</span>
+                  {e.summary && <span class="summary">{e.summary}</span>}
+                </span>
+                <span class="go" aria-hidden="true">→</span>
+              </a>
+            ) : (
+              <div class="text">
+                <h2 class="title">{e.title}</h2>
+                {e.summary && <p class="summary">{e.summary}</p>}
+                {e.Content && (
+                  <div class="prose">
+                    <e.Content />
+                  </div>
+                )}
+              </div>
+            )}
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</Base>
+
+<style>
+  .head {
+    margin: var(--space-3) 0 var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+  .head .label { color: var(--brand-hi); }
+  .head h1 { margin-top: var(--space-2); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .entries { list-style: none; display: grid; gap: var(--space-3); max-width: 860px; }
+  .entry {
+    background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .entry.brief { border-style: dashed; padding: var(--space-4) var(--space-5); }
+  .link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    text-decoration: none;
+    color: inherit;
+  }
+  .entry:has(.link):hover { border-color: var(--brand); }
+  .marker { font: 500 var(--text-sm) var(--font-mono); color: var(--brand); }
+  .text { display: grid; gap: var(--space-1); flex: 1; }
+  .title {
+    font: 400 var(--text-xl)/1.1 var(--font-display);
+    letter-spacing: var(--tracking-display);
+    color: var(--text-bright);
+  }
+  .summary { color: var(--text-muted); }
+  .go { color: var(--brand); }
+  .brief .prose { margin-top: var(--space-2); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+</style>

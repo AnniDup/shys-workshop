@@ -1,30 +1,43 @@
 ---
+import { sections, type PartSection } from '../config/taxonomy';
+import { arcSlugOf, getAdventure } from '../lib/adventure';
 import type { Doc, Project } from '../lib/content';
 import { docSlugOf } from '../lib/content';
 import { url } from '../lib/url';
 
-// Side navigation for a project's sheets: its docs, then the changelog.
+// Side navigation for a project: its sheets, then (for adventures) arcs and sections.
 interface Props {
   project: Project;
   docs: Doc[];
-  current: string; // doc slug, or 'changelog'
+  // What's open: a doc slug, 'changelog', 'arcs', 'arcs/<slug>', 'npcs', 'npcs/<slug>', ...
+  current: string;
 }
 const { project, docs, current } = Astro.props;
 const base = `/${project.data.domain}/${project.id}`;
+const adventure = await getAdventure(project.id);
 
 const sheets = [
   ...docs.map((d) => ({ slug: docSlugOf(d), title: d.data.title })),
   { slug: 'changelog', title: 'Changelog' },
 ];
+
+const partSections = (['npcs', 'locations', 'items'] as PartSection[])
+  .map((s) => ({ key: s, label: sections[s].label, count: adventure[s].length }))
+  .filter((s) => s.count > 0);
+
+const isCurrent = (path: string) => (current === path ? 'page' : undefined);
+const inSection = (key: string) => current === key || current.startsWith(`${key}/`);
 ---
 
-<nav aria-label="Project sheets" class="sheets">
+<nav aria-label="Project navigation" class="sheets">
   <a href={url(base)} class="overview">{project.data.title}</a>
+
+  <p class="group label">Sheets</p>
   <ol>
     {
       sheets.map((s, i) => (
         <li>
-          <a href={url(`${base}/${s.slug}`)} aria-current={s.slug === current ? 'page' : undefined}>
+          <a href={url(`${base}/${s.slug}`)} aria-current={isCurrent(s.slug)}>
             <span class="num">{String(i + 1).padStart(2, '0')}</span>
             {s.title}
           </a>
@@ -32,6 +45,44 @@ const sheets = [
       ))
     }
   </ol>
+
+  {
+    adventure.arcs.length > 0 && (
+      <>
+        <p class="group label">
+          <a href={url(`${base}/arcs`)} aria-current={isCurrent('arcs')}>Arcs</a>
+        </p>
+        <ol>
+          {adventure.arcs.map((a, i) => (
+            <li>
+              <a href={url(`${base}/arcs/${arcSlugOf(a)}`)} aria-current={isCurrent(`arcs/${arcSlugOf(a)}`)}>
+                <span class="num">A{i + 1}</span>
+                {a.data.title}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </>
+    )
+  }
+
+  {
+    partSections.length > 0 && (
+      <ul class="parts">
+        {partSections.map((s) => (
+          <li>
+            <a
+              href={url(`${base}/${s.key}`)}
+              aria-current={inSection(s.key) ? 'page' : undefined}
+            >
+              {s.label}
+              <span class="count">{s.count}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
 </nav>
 
 <style>
@@ -47,7 +98,11 @@ const sheets = [
     margin-bottom: var(--space-2);
     border-bottom: 1px solid var(--line);
   }
-  ol { list-style: none; display: grid; gap: 2px; }
+  .group { margin: var(--space-4) 0 var(--space-1); padding-left: var(--space-2); }
+  .group:first-of-type { margin-top: var(--space-2); }
+  .group a { color: inherit; text-decoration: none; }
+  .group a:hover, .group a[aria-current='page'] { color: var(--brand-hi); }
+  ol, ul { list-style: none; display: grid; gap: 2px; }
   li a {
     display: flex;
     gap: var(--space-3);
@@ -64,7 +119,9 @@ const sheets = [
     border-left-color: var(--brand);
     color: var(--text-bright);
   }
-  .num { font: var(--text-xs) var(--font-mono); color: var(--brand); padding-top: 2px; }
+  .num { font: var(--text-xs) var(--font-mono); color: var(--brand); padding-top: 2px; min-width: 1.5em; }
+  .parts { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+  .count { margin-left: auto; font: var(--text-xs) var(--font-mono); color: var(--text-muted); padding-top: 2px; }
 
   @media (max-width: 900px) {
     .sheets { position: static; }

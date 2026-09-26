@@ -1,9 +1,9 @@
 ---
 # Standard
-title: Project name
-summary: One line for cards, under 160 characters.
+title: Fate Shy Rules
+summary: A hack for Fate Core based on all the homebrew rules designed during our group's adventures.
 domain: tabletop
-kind: adventure           # adventure, short-adventure, setting, location, character, item, rules
+kind: rules           # adventure, short-adventure, setting, location, character, item, rules
 status: concept           # concept, design, development, maintained, unmaintained, paused, discontinued
 # version: 0.0.1
 started: 2026-01-01
@@ -41,3 +41,7 @@ system: fate-core         # fate-core, pathfinder, dnd-5e (the system it was wri
 ---
 
 Overview goes here.
+
+This work is based on Fate Core System and Fate Accelerated Edition, products of Evil Hat Productions, LLC, developed, authored, and edited by Leonard Balsera, Brian Engard, Jeremy Keller, Ryan Macklin, Mike Olson, Clark Valentine, Amanda Valentine, Fred Hicks, and Rob Donoghue, and licensed for our use under the Creative Commons Attribution 3.0 Unported license.
+
+Fate™ is a trademark of Evil Hat Productions, LLC. The Powered by Fate logo is © Evil Hat Productions, LLC and is used with permission.

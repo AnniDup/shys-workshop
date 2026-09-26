@@ -183,6 +183,49 @@ const changelogs = defineCollection({
   schema: z.object({}),
 });
 
+// Adventure parts: one file per NPC, location or item, inside a Tabletop project.
+//   <project>/npcs/captain-salt.md -> id "<project>/npcs/captain-salt"
+const parts = defineCollection({
+  loader: glob({
+    pattern: '*/{npcs,locations,items}/*.md',
+    base: './src/content/projects',
+    generateId: ({ entry }) => entry.replace(/\.md$/, ''),
+  }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      summary: z.string().optional(),
+      // true: shown in full on the section's list, no page of its own
+      brief: z.boolean(),
+      order: z.number().default(0),
+      images: z.array(figure(image)).default([]),
+      draft: z.boolean().default(false),
+    }),
+});
+
+// Story arcs: one file per arc, scenes written in the body.
+//   <project>/arcs/the-stolen-chart.md -> id "<project>/the-stolen-chart"
+const arcs = defineCollection({
+  loader: glob({
+    pattern: '*/arcs/*.md',
+    base: './src/content/projects',
+    generateId: ({ entry }) => {
+      const [project, , file] = entry.split('/');
+      return `${project}/${file.replace(/\.md$/, '')}`;
+    },
+  }),
+  schema: z.object({
+    title: z.string(),
+    order: z.number(),
+    summary: z.string().optional(),
+    // File names (without .md) of the NPCs, locations and items in this arc
+    npcs: z.array(z.string()).default([]),
+    locations: z.array(z.string()).default([]),
+    items: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+  }),
+});
+
 // Notebook: rough notes and ideas, one file per note in src/content/notes/.
 const notes = defineCollection({
   loader: glob({ pattern: '*.md', base: './src/content/notes' }),
@@ -197,4 +240,4 @@ const notes = defineCollection({
   }),
 });
 
-export const collections = { projects, docs, changelogs, notes };
+export const collections = { projects, docs, changelogs, notes, parts, arcs };

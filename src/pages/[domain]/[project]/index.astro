@@ -6,7 +6,8 @@ import Figure from '../../../components/Figure.astro';
 import Pill from '../../../components/Pill.astro';
 import StatusFlag from '../../../components/StatusFlag.astro';
 import Base from '../../../layouts/Base.astro';
-import { aiLevels, docTypes, domains, linkTypes, systems } from '../../../config/taxonomy';
+import { aiLevels, docTypes, domains, linkTypes, sections, systems } from '../../../config/taxonomy';
+import { arcSlugOf, getAdventure, hasAdventure } from '../../../lib/adventure';
 import {
   docSlugOf,
   formatDate,
@@ -42,6 +43,12 @@ const setting = d.domain === 'tabletop' && d.setting ? visible(await getEntry(d.
 const rules = d.domain === 'tabletop' && d.rules ? visible(await getEntry(d.rules)) : undefined;
 const connected = await getConnected(project.id);
 const projectLink = (p: Project) => url(`/${p.data.domain}/${p.id}`);
+
+// Adventure contents: arcs and the NPC, location and item sections.
+const adventure = await getAdventure(project.id);
+const partSections = (['npcs', 'locations', 'items'] as const)
+  .map((s) => ({ key: s, label: sections[s].label, count: adventure[s].length }))
+  .filter((s) => s.count > 0);
 ---
 
 <Base title={d.title} description={d.summary}>
@@ -165,6 +172,38 @@ const projectLink = (p: Project) => url(`/${p.data.domain}/${p.id}`);
           </li>
         </ol>
       </section>
+
+      {
+        hasAdventure(adventure) && (
+          <section class="panel">
+            <h2 class="label">Adventure</h2>
+            {adventure.arcs.length > 0 && (
+              <ol class="sheets">
+                {adventure.arcs.map((a, i) => (
+                  <li>
+                    <a href={url(`/${d.domain}/${project.id}/arcs/${arcSlugOf(a)}`)}>
+                      <span class="num">A{i + 1}</span>
+                      <span class="t">{a.data.title}</span>
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            )}
+            {partSections.length > 0 && (
+              <ul class="sheets parts">
+                {partSections.map((s) => (
+                  <li>
+                    <a href={url(`/${d.domain}/${project.id}/${s.key}`)}>
+                      <span class="t">{s.label}</span>
+                      <span class="label">{s.count}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )
+      }
     </aside>
   </div>
 </Base>
@@ -235,6 +274,8 @@ const projectLink = (p: Project) => url(`/${p.data.domain}/${p.id}`);
   }
   .sheets a:hover { background: var(--bg-raised); color: var(--text-bright); }
   .num { font: var(--text-xs) var(--font-mono); color: var(--brand); }
+  .parts { list-style: none; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+  .parts a { grid-template-columns: 1fr auto; }
 
   @media (max-width: 900px) {
     .layout { grid-template-columns: 1fr; }
