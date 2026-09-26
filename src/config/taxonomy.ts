@@ -46,6 +46,7 @@ export const kinds = {
     mod: 'Mod',
     adventure: 'Adventure',
     map: 'Map',
+    challenge:'Challenge',
   },
   builds: {
     app: 'App',

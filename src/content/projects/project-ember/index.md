@@ -1,14 +1,14 @@
 ---
 # Standard
-title: Habit Tracker
-summary: A habit tracker built as a game in Unity, with a web version.
-domain: builds
-kind: app                 # app, game, tool, prototype
-status: concept
+title: Project Ember
+summary: A rebalance mod pack project that turns vanilla FO4 into what I always wanted it to be.
+domain: games
+kind: mod                 # mod, adventure, map
+status: concept           # concept, planning, development, maintained, unmaintained, paused, discontinued
 # version: 0.0.1
-started: 2026-09-26
+started: 2026-05-20
 # released: 2026-01-01    # required once maintained or unmaintained
-updated: 2026-09-26
+updated: 2026-05-20
 draft: true
 
 # AI usage: level is none, assisted, co-built or generated.
@@ -20,12 +20,12 @@ ai:
 
 # Links shown on the project page:
 # links:
-#   - { label: Play in browser, url: https://example.com, type: reference }
+#   - { label: Download, url: https://example.com, type: download }   # download, repo, video, reference
 
 # Card image for lists (3:4 portrait):
 thumbnail:
   src: ./images/thumbnail.jpg
-  alt: Unity engine logo.
+  alt: Fallout 4 cover art.
 
 # Images for the project page:
 # images:
@@ -33,10 +33,10 @@ thumbnail:
 #     alt: Describe what the image shows
 #     caption: Optional short caption
 
-# Builds
-engine: Unity
-platforms: [Web]
-# stack: [C#]
+# Games
+game: fallout-4            # fallout-4, terraria, oni
+gameVersion: pre-anniversary
+# requires: [Mod name, DLC name]
 ---
 
 Overview goes here.

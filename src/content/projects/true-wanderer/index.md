@@ -1,9 +1,9 @@
 ---
 # Standard
-title: Project name
-summary: One line for cards, under 240 characters.
+title: True Wanderer Challenge
+summary: A Fallout 4 Frost adventure where the player is expected to only ever use the items in their inventory to survive. No item storage allowed.
 domain: games
-kind: mod                 # mod, adventure, map
+kind: challenge                 # mod, adventure, map, challenge
 status: concept           # concept, planning, development, maintained, unmaintained, paused, discontinued
 # version: 0.0.1
 started: 2026-01-01
@@ -23,9 +23,9 @@ ai:
 #   - { label: Download, url: https://example.com, type: download }   # download, repo, video, reference
 
 # Card image for lists (3:4 portrait):
-# thumbnail:
-#   src: ./images/thumbnail.jpg
-#   alt: Describe what the image shows
+thumbnail:
+  src: ./images/thumbnail.jpg
+  alt: Fallout 4 game cover art.
 
 # Images for the project page:
 # images:
@@ -34,8 +34,8 @@ ai:
 #     caption: Optional short caption
 
 # Games
-game: terraria            # fallout-4, terraria, oni
-# gameVersion: 1.4.4.9
+game: fallout-4            # fallout-4, terraria, oni
+gameVersion: Pre-anniversary edition
 # requires: [Mod name, DLC name]
 ---
 

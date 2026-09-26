@@ -1,7 +1,7 @@
 ---
 # Standard
 title: Oasis Adventure Map
-summary: A Terraria adventure map.
+summary: A Terraria adventure map based on Oasis from Ready Player One! Players fight bosses in themed arenas and explore the Terraria Oasis for secrets.
 domain: games
 kind: map
 status: development

@@ -1,9 +1,9 @@
 ---
 # Standard
-title: Project name
-summary: One line for cards, under 240 characters.
+title: Blackfall Adventure Map
+summary: A 1-3 person advneture where a team of special ops soldiers crash on a foreign world and need to escape.
 domain: games
-kind: mod                 # mod, adventure, map
+kind: adventure                 # mod, adventure, map, challenge
 status: concept           # concept, planning, development, maintained, unmaintained, paused, discontinued
 # version: 0.0.1
 started: 2026-01-01
@@ -23,9 +23,9 @@ ai:
 #   - { label: Download, url: https://example.com, type: download }   # download, repo, video, reference
 
 # Card image for lists (3:4 portrait):
-# thumbnail:
-#   src: ./images/thumbnail.jpg
-#   alt: Describe what the image shows
+thumbnail:
+  src: ./images/thumbnail.jpg
+  alt: Terraria game cover
 
 # Images for the project page:
 # images:

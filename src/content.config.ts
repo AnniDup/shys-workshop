@@ -58,7 +58,7 @@ const ai = z
 const projectBase = (image: ImageFn) =>
   z.object({
     title: z.string(),
-    summary: z.string().max(160, 'Keep summaries under 160 characters for cards'),
+    summary: z.string().max(240, 'Keep summaries under 240 characters for cards'),
     status: z.enum(keysOf(statuses)),
     // Current version, e.g. 0.3.0 or 1.2.0-beta
     version: z

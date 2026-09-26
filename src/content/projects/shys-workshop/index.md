@@ -23,9 +23,9 @@ links:
   - { label: GitHub repository, url: https://github.com/AnniDup/shys-workshop, type: repo }
 
 # Card image for lists (3:4 portrait):
-# thumbnail:
-#   src: ./images/thumbnail.jpg
-#   alt: Describe what the image shows
+thumbnail:
+  src: ./images/thumbnail.jpg
+  alt: Astro logo
 
 # Images for the project page:
 # images:

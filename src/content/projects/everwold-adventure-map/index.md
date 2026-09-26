@@ -1,12 +1,12 @@
 ---
 # Standard
-title: Project name
-summary: One line for cards, under 240 characters.
+title: Everwold Adventure Map
+summary: A forever build map for when the Terraria build itch comes around. Published so others can enjoy and use the builds
 domain: games
-kind: mod                 # mod, adventure, map
-status: concept           # concept, planning, development, maintained, unmaintained, paused, discontinued
+kind: map                 # mod, adventure, map
+status: development           # concept, planning, development, maintained, unmaintained, paused, discontinued
 # version: 0.0.1
-started: 2026-01-01
+started: 2024-01-01
 # released: 2026-01-01    # required once maintained or unmaintained
 updated: 2026-01-01
 draft: true
@@ -23,9 +23,9 @@ ai:
 #   - { label: Download, url: https://example.com, type: download }   # download, repo, video, reference
 
 # Card image for lists (3:4 portrait):
-# thumbnail:
-#   src: ./images/thumbnail.jpg
-#   alt: Describe what the image shows
+thumbnail:
+  src: ./images/thumbnail.jpg
+  alt: Terraria game cover image.
 
 # Images for the project page:
 # images:
