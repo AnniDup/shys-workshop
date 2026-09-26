@@ -1,3 +1,8 @@
+## 0.8.0 (26 Sep 2026)
+
+- Added the home page: readouts, on the bench, activity log, shipped, the queue and domains.
+- Grouped statuses into phases: queued, active, shipped and inactive.
+
 ## 0.7.0 (26 Sep 2026)
 
 - Added the Builds domain, for apps, own games and tools built from scratch.

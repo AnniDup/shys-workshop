@@ -1,7 +1,7 @@
 ---
 # Standard
 title: Blackfall Adventure Map
-summary: A 1-3 person advneture where a team of special ops soldiers crash on a foreign world and need to escape.
+summary: A 1-3 person adventure where a team of special ops soldiers crash on a foreign world and need to escape.
 domain: games
 kind: adventure                 # mod, adventure, map, challenge
 status: concept           # concept, planning, development, maintained, unmaintained, paused, discontinued

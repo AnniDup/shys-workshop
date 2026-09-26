@@ -1,15 +1,331 @@
 ---
+import ProjectCard from '../components/ProjectCard.astro';
+import StatusFlag from '../components/StatusFlag.astro';
 import Base from '../layouts/Base.astro';
 import { site } from '../config/site';
+import { domains, phases, statuses, statusesIn, type Phase } from '../config/taxonomy';
+import { getActivity, getDomainSummary, phaseOf } from '../lib/activity';
+import { formatDate, getNotes, getProjects } from '../lib/content';
+import { url } from '../lib/url';
+
+const BENCH_LIMIT = 6;
+const SHIPPED_LIMIT = 6;
+const QUEUE_LIMIT = 8;
+
+const [projects, notes, activity, domainSummary] = await Promise.all([
+  getProjects(),
+  getNotes(),
+  getActivity(8),
+  getDomainSummary(),
+]);
+
+const inPhase = (phase: Phase) => projects.filter((p) => phaseOf(p) === phase);
+
+// Projects are already sorted by most recently updated.
+const bench = inPhase('active');
+const queue = inPhase('queued');
+// Shipped: most recently released first.
+const shipped = inPhase('shipped').sort(
+  (a, b) => (b.data.released?.getTime() ?? 0) - (a.data.released?.getTime() ?? 0),
+);
+
+const readouts = [
+  { label: phases.active.label, value: bench.length, colour: 'var(--status-development)' },
+  { label: phases.queued.label, value: queue.length, colour: 'var(--status-concept)' },
+  { label: phases.shipped.label, value: shipped.length, colour: 'var(--status-maintained)' },
+  { label: 'Notes', value: notes.length, colour: 'var(--accent)' },
+];
+
+// Link to a domain page filtered to one phase's statuses.
+const phaseLink = (domain: string, phase: Phase) =>
+  url(`/${domain}?status=${statusesIn(phase).join(',')}`);
+
+const stamp = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 ---
 
 <Base>
-  <p class="label">Workshop Floor</p>
-  <h1>{site.name}</h1>
-  <p class="lede">{site.description}</p>
+  <header class="intro">
+    <p class="label">Workshop Floor</p>
+    <h1>{site.name}</h1>
+    <p class="lede">{site.description}</p>
+  </header>
+
+  <dl class="readouts">
+    {
+      readouts.map((r) => (
+        <div class="readout" style={`--c: ${r.colour}`}>
+          <dt class="label">{r.label}</dt>
+          <dd>{r.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  <div class="floor">
+    <section class="bench" aria-labelledby="bench-h">
+      <div class="sec-head">
+        <h2 id="bench-h" class="label">On the Bench</h2>
+        <span class="label hint">Design and in development</span>
+      </div>
+      {
+        bench.length > 0 ? (
+          <div class="cards">
+            {bench.slice(0, BENCH_LIMIT).map((p) => <ProjectCard project={p} />)}
+          </div>
+        ) : (
+          <p class="empty">Nothing on the bench right now.</p>
+        )
+      }
+      {bench.length > BENCH_LIMIT && <p class="more">+ {bench.length - BENCH_LIMIT} more active, by domain below</p>}
+    </section>
+
+    <section class="log" aria-labelledby="log-h">
+      <div class="sec-head">
+        <h2 id="log-h" class="label">Activity Log</h2>
+      </div>
+      <ol>
+        {
+          activity.map((item) => (
+            <li>
+              <a href={url(item.href)}>
+                <span class="when">{stamp(item.date)}</span>
+                <span class="what">
+                  <span class="tag">{item.label}</span>
+                  <span class="t">{item.title}</span>
+                  {item.summary && <span class="s">{item.summary}</span>}
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+  </div>
+
+  {
+    shipped.length > 0 && (
+      <section class="shipped" aria-labelledby="shipped-h">
+        <div class="sec-head">
+          <h2 id="shipped-h" class="label">Shipped</h2>
+          <span class="label hint">Available to use</span>
+        </div>
+        <ul class="ship-grid">
+          {shipped.slice(0, SHIPPED_LIMIT).map((p) => (
+            <li>
+              <a class="ship" href={url(`/${p.data.domain}/${p.id}`)}>
+                <span class="t">{p.data.title}</span>
+                <span class="meta">
+                  <StatusFlag status={p.data.status} />
+                  {p.data.version && <span class="label">v{p.data.version}</span>}
+                  <span class="label">{domains[p.data.domain].label}</span>
+                </span>
+                {p.data.released && <span class="rel">Released {formatDate(p.data.released)}</span>}
+              </a>
+            </li>
+          ))}
+        </ul>
+        {shipped.length > SHIPPED_LIMIT && <p class="more">+ {shipped.length - SHIPPED_LIMIT} more shipped, by domain below</p>}
+      </section>
+    )
+  }
+
+  <div class="lower">
+    {
+      queue.length > 0 && (
+        <section aria-labelledby="queue-h">
+          <div class="sec-head">
+            <h2 id="queue-h" class="label">The Queue</h2>
+            <span class="label hint">Concepts waiting their turn</span>
+          </div>
+          <ul class="rows">
+            {queue.slice(0, QUEUE_LIMIT).map((p) => (
+              <li>
+                <a href={url(`/${p.data.domain}/${p.id}`)}>
+                  <span class="dot" style={`--c: ${statuses[p.data.status].colour}`} />
+                  <span class="t">{p.data.title}</span>
+                  <span class="label">{domains[p.data.domain].label}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          {queue.length > QUEUE_LIMIT && <p class="more">+ {queue.length - QUEUE_LIMIT} more concepts, by domain below</p>}
+        </section>
+      )
+    }
+
+    <section aria-labelledby="domains-h">
+      <div class="sec-head">
+        <h2 id="domains-h" class="label">Domains</h2>
+      </div>
+      <ul class="rows domains">
+        {
+          domainSummary.map((d) => (
+            <li>
+              <a class="t" href={url(`/${d.domain}`)}>{d.label}</a>
+              <span class="counts">
+                {d.active > 0 && <a href={phaseLink(d.domain, 'active')}>{d.active} active</a>}
+                {d.queued > 0 && <a href={phaseLink(d.domain, 'queued')}>{d.queued} queued</a>}
+                {d.shipped > 0 && <a href={phaseLink(d.domain, 'shipped')}>{d.shipped} shipped</a>}
+              </span>
+            </li>
+          ))
+        }
+        {
+          notes.length > 0 && (
+            <li>
+              <a class="t" href={url('/notebook')}>Notebook</a>
+              <span class="counts"><a href={url('/notebook')}>{notes.length} {notes.length === 1 ? 'note' : 'notes'}</a></span>
+            </li>
+          )
+        }
+      </ul>
+    </section>
+  </div>
 </Base>
 
 <style>
-  h1 { margin: var(--space-2) 0 var(--space-3); }
+  .intro {
+    padding: var(--space-4) 0 var(--space-5) var(--space-4);
+    border-left: 3px solid var(--brand);
+    margin-bottom: var(--space-5);
+  }
+  .intro h1 { margin: var(--space-2) 0 var(--space-2); }
   .lede { color: var(--text-muted); max-width: var(--prose-max); }
+
+  .readouts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+  }
+  .readout {
+    background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--c);
+    border-radius: var(--radius);
+    padding: var(--space-3) var(--space-4);
+  }
+  .readout dd {
+    font: 400 2.25rem/1 var(--font-display);
+    color: var(--c);
+    margin-top: var(--space-1);
+  }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
+    border-bottom: 1px solid var(--line);
+  }
+  .sec-head h2 { color: var(--brand-hi); letter-spacing: var(--tracking-label); }
+  .hint { text-transform: none; letter-spacing: 0.02em; }
+  .empty, .more { color: var(--text-muted); font-size: var(--text-sm); }
+  .more { margin-top: var(--space-3); }
+
+  .floor {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+    margin-bottom: var(--space-7);
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+    gap: var(--space-4);
+  }
+
+  .log ol { list-style: none; }
+  .log a {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px dashed var(--line);
+    text-decoration: none;
+    color: inherit;
+  }
+  .log a:hover .t { color: var(--brand-hi); }
+  .when {
+    font: 500 var(--text-xs) var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-hi);
+    padding-top: 2px;
+  }
+  .what { display: grid; gap: 2px; }
+  .tag {
+    font: 500 var(--text-xs) var(--font-mono);
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .t { color: var(--text-bright); font-weight: 600; font-size: var(--text-sm); }
+  .s {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .shipped { margin-bottom: var(--space-7); }
+  .ship-grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-3);
+  }
+  .ship {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s;
+  }
+  .ship:hover { border-color: var(--brand); }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .rel { color: var(--text-muted); font-size: var(--text-sm); }
+
+  .lower {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+    gap: var(--space-6);
+  }
+  .rows { list-style: none; }
+  .rows li { border-bottom: 1px dashed var(--line); }
+  .rows > li > a,
+  .domains li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    text-decoration: none;
+    color: inherit;
+  }
+  .rows > li > a:hover .t { color: var(--brand-hi); }
+  .rows .label { margin-left: auto; }
+  .dot { width: 8px; height: 8px; flex: none; background: var(--c); }
+
+  .domains .t { text-decoration: none; }
+  .domains .t:hover { color: var(--brand-hi); }
+  .counts { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); }
+  .counts a {
+    font: 500 var(--text-xs) var(--font-mono);
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .counts a:hover { color: var(--brand-hi); }
+
+  @media (max-width: 900px) {
+    .floor { grid-template-columns: 1fr; }
+  }
 </style>

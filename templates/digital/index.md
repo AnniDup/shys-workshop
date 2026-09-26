@@ -4,7 +4,7 @@ title: Project name
 summary: One line for cards, under 160 characters.
 domain: digital
 kind: site                 # site, tool, experiment
-status: concept           # concept, planning, development, maintained, unmaintained, paused, discontinued
+status: concept           # concept, design, development, maintained, unmaintained, paused, discontinued
 # version: 0.0.1
 started: 2026-01-01
 # released: 2026-01-01    # required once maintained or unmaintained

@@ -46,7 +46,7 @@ export const kinds = {
     mod: 'Mod',
     adventure: 'Adventure',
     map: 'Map',
-    challenge:'Challenge',
+    challenge: 'Challenge',
   },
   builds: {
     app: 'App',
@@ -61,19 +61,31 @@ export const kinds = {
   },
 } as const;
 
+// Phases: groups of statuses, used by the home page and counts.
+export const phases = {
+  queued: { label: 'Queued', description: 'Ideas waiting their turn' },
+  active: { label: 'Active', description: 'Being worked on' },
+  shipped: { label: 'Shipped', description: 'Available to use' },
+  inactive: { label: 'Inactive', description: 'Paused or stopped before release' },
+} as const;
+export type Phase = keyof typeof phases;
+
 // Status: where a project is in its life. Separate from `draft`, which is about the write-up.
 export const statuses = {
-  concept: { label: 'Concept', colour: 'var(--status-concept)' },
-  planning: { label: 'Planning', colour: 'var(--status-planning)' },
-  development: { label: 'In development', colour: 'var(--status-development)' },
-  maintained: { label: 'Maintained', colour: 'var(--status-maintained)' },
-  unmaintained: { label: 'Unmaintained', colour: 'var(--status-unmaintained)' },
-  paused: { label: 'Paused', colour: 'var(--status-paused)' },
-  discontinued: { label: 'Discontinued', colour: 'var(--status-discontinued)' },
+  concept: { label: 'Concept', colour: 'var(--status-concept)', phase: 'queued' },
+  design: { label: 'Design', colour: 'var(--status-design)', phase: 'active' },
+  development: { label: 'In development', colour: 'var(--status-development)', phase: 'active' },
+  maintained: { label: 'Maintained', colour: 'var(--status-maintained)', phase: 'shipped' },
+  unmaintained: { label: 'Unmaintained', colour: 'var(--status-unmaintained)', phase: 'shipped' },
+  paused: { label: 'Paused', colour: 'var(--status-paused)', phase: 'inactive' },
+  discontinued: { label: 'Discontinued', colour: 'var(--status-discontinued)', phase: 'inactive' },
 } as const;
 export type Status = keyof typeof statuses;
 
-// Statuses that mean the project has been released.
+// The statuses in a phase, e.g. statusesIn('active') -> ['design', 'development']
+export const statusesIn = (phase: Phase): Status[] =>
+  (Object.keys(statuses) as Status[]).filter((s) => statuses[s].phase === phase);
+
 export const releasedStatuses: Status[] = ['maintained', 'unmaintained'];
 
 // Doc types: shared across every domain.
