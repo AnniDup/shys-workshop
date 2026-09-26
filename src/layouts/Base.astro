@@ -6,7 +6,7 @@ import '../styles/global.css';
 
 import { site } from '../config/site';
 import { domains, type Domain } from '../config/taxonomy';
-import { getActiveDomains } from '../lib/content';
+import { getActiveDomains, getNotes } from '../lib/content';
 import { isCurrent, url } from '../lib/url';
 
 interface Props {
@@ -22,6 +22,10 @@ const active = await getActiveDomains();
 const nav = (Object.keys(domains) as Domain[])
   .filter((d) => active.has(d))
   .map((d) => ({ href: `/${d}`, label: domains[d].label }));
+
+// The notebook sits after the domains, once it has notes.
+const notes = await getNotes();
+if (notes.length) nav.push({ href: '/notebook', label: 'Notebook' });
 ---
 
 <!doctype html>

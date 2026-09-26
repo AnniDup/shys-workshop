@@ -1,0 +1,125 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import SheetNav from '../../../components/SheetNav.astro';
+import Base from '../../../layouts/Base.astro';
+import { domains } from '../../../config/taxonomy';
+import {
+  docSlugOf,
+  getChangelog,
+  getDocsFor,
+  getProjects,
+  type Changelog,
+  type Doc,
+  type Project,
+} from '../../../lib/content';
+import { url } from '../../../lib/url';
+
+// Every project gets a changelog page at /<domain>/<project>/changelog.
+export const getStaticPaths = (async () => {
+  const projects = await getProjects();
+  const paths = [];
+  for (const project of projects) {
+    paths.push({
+      params: { domain: project.data.domain, project: project.id },
+      props: {
+        project,
+        docs: await getDocsFor(project.id),
+        changelog: await getChangelog(project.id),
+      },
+    });
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+interface Props {
+  project: Project;
+  docs: Doc[];
+  changelog: Changelog;
+}
+const { project, docs, changelog } = Astro.props;
+const { Content } = await render(changelog);
+const base = `/${project.data.domain}/${project.id}`;
+const prev = docs.at(-1);
+---
+
+<Base title={`Changelog | ${project.data.title}`} description={`Changes to ${project.data.title}.`}>
+  <Breadcrumb
+    items={[
+      { label: domains[project.data.domain].label, href: `/${project.data.domain}` },
+      { label: project.data.title, href: base },
+      { label: 'Changelog' },
+    ]}
+  />
+
+  <header class="head">
+    <p class="label">Sheet {docs.length + 1} of {docs.length + 1}</p>
+    <h1>Changelog</h1>
+    {project.data.version && <p class="summary">Current version {project.data.version}</p>}
+  </header>
+
+  <div class="layout">
+    <SheetNav project={project} docs={docs} current="changelog" />
+
+    <article>
+      <div class="prose changelog">
+        <Content />
+      </div>
+
+      {
+        prev && (
+          <nav class="pager" aria-label="Previous sheet">
+            <a href={url(`${base}/${docSlugOf(prev)}`)}>
+              <span class="label">Previous</span>
+              {prev.data.title}
+            </a>
+          </nav>
+        )
+      }
+    </article>
+  </div>
+</Base>
+
+<style>
+  .head {
+    margin: var(--space-3) 0 var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+  .head .label { color: var(--brand-hi); }
+  .head h1 { margin-top: var(--space-2); }
+  .summary { color: var(--text-muted); margin-top: var(--space-2); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+  article { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+
+  /* Each version heading reads like a stamped entry. */
+  .changelog :global(h2) {
+    font-size: var(--text-xl);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+  .changelog :global(h2:first-child) { border-top: 0; padding-top: 0; }
+
+  .pager {
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+  .pager a {
+    display: inline-flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    text-decoration: none;
+    color: var(--text-bright);
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+</style>

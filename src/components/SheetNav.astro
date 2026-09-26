@@ -1,0 +1,72 @@
+---
+import type { Doc, Project } from '../lib/content';
+import { docSlugOf } from '../lib/content';
+import { url } from '../lib/url';
+
+// Side navigation for a project's sheets: its docs, then the changelog.
+interface Props {
+  project: Project;
+  docs: Doc[];
+  current: string; // doc slug, or 'changelog'
+}
+const { project, docs, current } = Astro.props;
+const base = `/${project.data.domain}/${project.id}`;
+
+const sheets = [
+  ...docs.map((d) => ({ slug: docSlugOf(d), title: d.data.title })),
+  { slug: 'changelog', title: 'Changelog' },
+];
+---
+
+<nav aria-label="Project sheets" class="sheets">
+  <a href={url(base)} class="overview">{project.data.title}</a>
+  <ol>
+    {
+      sheets.map((s, i) => (
+        <li>
+          <a href={url(`${base}/${s.slug}`)} aria-current={s.slug === current ? 'page' : undefined}>
+            <span class="num">{String(i + 1).padStart(2, '0')}</span>
+            {s.title}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .sheets { position: sticky; top: 80px; }
+  .overview {
+    display: block;
+    font: 500 var(--text-xs) var(--font-mono);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--brand-hi);
+    text-decoration: none;
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-2);
+    border-bottom: 1px solid var(--line);
+  }
+  ol { list-style: none; display: grid; gap: 2px; }
+  li a {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-2);
+    border-radius: var(--radius);
+    font-size: var(--text-sm);
+    color: var(--text);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+  }
+  li a:hover { background: var(--bg-raised); }
+  li a[aria-current='page'] {
+    background: var(--brand-glow);
+    border-left-color: var(--brand);
+    color: var(--text-bright);
+  }
+  .num { font: var(--text-xs) var(--font-mono); color: var(--brand); padding-top: 2px; }
+
+  @media (max-width: 900px) {
+    .sheets { position: static; }
+  }
+</style>

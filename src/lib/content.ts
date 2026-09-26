@@ -2,13 +2,33 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type Project = CollectionEntry<'projects'>;
 export type Doc = CollectionEntry<'docs'>;
+export type Changelog = CollectionEntry<'changelogs'>;
+export type Note = CollectionEntry<'notes'>;
 
 // Drafts show while developing and are left out of the live build.
 const visible = (e: { data: { draft: boolean } }) => import.meta.env.DEV || !e.data.draft;
 
 export async function getProjects(): Promise<Project[]> {
-  const all = await getCollection('projects', visible);
+  const [all, changelogs] = await Promise.all([
+    getCollection('projects', visible),
+    getCollection('changelogs'),
+  ]);
+
+  // Every project must have a changelog.md.
+  const logged = new Set(changelogs.map((c) => c.id));
+  const missing = all.filter((p) => !logged.has(p.id));
+  if (missing.length) {
+    throw new Error(
+      `Projects without a changelog.md: ${missing.map((p) => p.id).join(', ')}`,
+    );
+  }
+
   return all.sort((a, b) => b.data.updated.getTime() - a.data.updated.getTime());
+}
+
+export async function getChangelog(projectId: string): Promise<Changelog> {
+  const changelogs = await getCollection('changelogs');
+  return changelogs.find((c) => c.id === projectId)!;
 }
 
 export async function getDocs(): Promise<Doc[]> {
@@ -43,4 +63,19 @@ export async function getDocsFor(projectId: string): Promise<Doc[]> {
 export async function getActiveDomains() {
   const projects = await getProjects();
   return new Set(projects.map((p) => p.data.domain));
+}
+
+export async function getProjectsIn(domain: string): Promise<Project[]> {
+  const projects = await getProjects();
+  return projects.filter((p) => p.data.domain === domain);
+}
+
+// Dates shown as e.g. 26 Sep 2026.
+export const formatDate = (d: Date) =>
+  d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+// Notebook entries, newest first.
+export async function getNotes(): Promise<Note[]> {
+  const notes = await getCollection('notes', visible);
+  return notes.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 }

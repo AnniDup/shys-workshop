@@ -1,0 +1,207 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import Figure from '../../../components/Figure.astro';
+import Pill from '../../../components/Pill.astro';
+import StatusFlag from '../../../components/StatusFlag.astro';
+import Base from '../../../layouts/Base.astro';
+import { aiLevels, docTypes, domains, linkTypes } from '../../../config/taxonomy';
+import { docSlugOf, formatDate, getDocsFor, getProjects, type Project } from '../../../lib/content';
+import { categoryOf, kindLabelOf } from '../../../lib/project';
+import { url } from '../../../lib/url';
+
+export const getStaticPaths = (async () => {
+  const projects = await getProjects();
+  return projects.map((project) => ({
+    params: { domain: project.data.domain, project: project.id },
+    props: { project },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  project: Project;
+}
+const { project } = Astro.props;
+const d = project.data;
+const { Content } = await render(project);
+const docs = await getDocsFor(project.id);
+const category = categoryOf(project);
+const [lead, ...rest] = d.images;
+---
+
+<Base title={d.title} description={d.summary}>
+  <Breadcrumb
+    items={[
+      { label: domains[d.domain].label, href: `/${d.domain}` },
+      ...(category
+        ? [{ label: category.label, href: `/${d.domain}?${category.key}=${category.value}` }]
+        : []),
+      { label: d.title },
+    ]}
+  />
+
+  <header class="head">
+    <h1>{d.title}</h1>
+    <p class="summary">{d.summary}</p>
+  </header>
+
+  <div class="layout">
+    <div class="main">
+      {lead && <Figure image={lead} />}
+      {
+        rest.length > 0 && (
+          <div class="more">
+            {rest.map((img) => (
+              <Figure image={img} sizes="(max-width: 800px) 50vw, 400px" />
+            ))}
+          </div>
+        )
+      }
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+
+    <aside>
+      <dl class="info">
+        {
+          category && (
+            <div>
+              <dt class="label">{domains[d.domain].category!.label}</dt>
+              <dd><Pill label={category.label} colour={category.colour} /></dd>
+            </div>
+          )
+        }
+        <div><dt class="label">Kind</dt><dd>{kindLabelOf(project)}</dd></div>
+        <div><dt class="label">Status</dt><dd><StatusFlag status={d.status} /></dd></div>
+        {d.version && <div><dt class="label">Version</dt><dd>{d.version}</dd></div>}
+        {d.started && <div><dt class="label">Started</dt><dd>{formatDate(d.started)}</dd></div>}
+        {d.released && <div><dt class="label">Released</dt><dd>{formatDate(d.released)}</dd></div>}
+        <div><dt class="label">Updated</dt><dd>{formatDate(d.updated)}</dd></div>
+        {d.domain === 'games' && d.gameVersion && <div><dt class="label">Game version</dt><dd>{d.gameVersion}</dd></div>}
+        {d.domain === 'games' && d.requires.length > 0 && <div><dt class="label">Requires</dt><dd>{d.requires.join(', ')}</dd></div>}
+        {d.domain === 'builds' && d.engine && <div><dt class="label">Engine</dt><dd>{d.engine}</dd></div>}
+        {d.domain !== 'games' && d.platforms.length > 0 && <div><dt class="label">Platforms</dt><dd>{d.platforms.join(', ')}</dd></div>}
+        {d.domain !== 'games' && d.stack.length > 0 && <div><dt class="label">Stack</dt><dd>{d.stack.join(', ')}</dd></div>}
+      </dl>
+
+      <section class="panel ai">
+        <h2 class="label">AI Usage</h2>
+        <p class="ai-level">{aiLevels[d.ai.level].label}</p>
+        <p class="ai-desc">{aiLevels[d.ai.level].description}</p>
+        {d.ai.models.length > 0 && <p class="ai-models"><span class="label">Models</span> {d.ai.models.join(', ')}</p>}
+        {d.ai.notes && <p class="ai-notes">{d.ai.notes}</p>}
+      </section>
+
+      {
+        d.links.length > 0 && (
+          <section class="panel">
+            <h2 class="label">Links</h2>
+            <ul class="links">
+              {d.links.map((l) => (
+                <li>
+                  <span class="label">{linkTypes[l.type]}</span>
+                  <a href={l.url} rel="noopener" target="_blank">{l.label}</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      <section class="panel">
+        <h2 class="label">Sheets</h2>
+        <ol class="sheets">
+          {docs.map((doc, i) => (
+            <li>
+              <a href={url(`/${d.domain}/${project.id}/${docSlugOf(doc)}`)}>
+                <span class="num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="t">{doc.data.title}</span>
+                {docTypes[doc.data.type] !== doc.data.title && (
+                  <span class="label">{docTypes[doc.data.type]}</span>
+                )}
+              </a>
+            </li>
+          ))}
+          <li>
+            <a href={url(`/${d.domain}/${project.id}/changelog`)}>
+              <span class="num">{String(docs.length + 1).padStart(2, '0')}</span>
+              <span class="t">Changelog</span>
+            </a>
+          </li>
+        </ol>
+      </section>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .head {
+    margin: var(--space-3) 0 var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+  .summary { color: var(--text-muted); margin-top: var(--space-2); max-width: var(--prose-max); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: var(--space-6);
+    align-items: start;
+  }
+  .main { display: flex; flex-direction: column; gap: var(--space-5); }
+  .more {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-3);
+  }
+
+  aside {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .info,
+  .panel {
+    background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--brand);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+  }
+  .info { display: grid; gap: var(--space-3); }
+  .info div { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: var(--space-3); }
+  .info dd { color: var(--text-bright); font-size: var(--text-sm); }
+
+  .panel h2 { color: var(--brand-hi); margin-bottom: var(--space-3); letter-spacing: var(--tracking-label); }
+  .ai { display: grid; gap: var(--space-2); }
+  .ai-level { color: var(--text-bright); font-weight: 600; }
+  .ai-desc, .ai-notes { color: var(--text-muted); font-size: var(--text-sm); }
+  .ai-models { font-size: var(--text-sm); }
+  .ai-models .label { margin-right: var(--space-2); }
+
+  .links { list-style: none; display: grid; gap: var(--space-2); }
+  .links li { display: grid; grid-template-columns: 80px 1fr; gap: var(--space-3); align-items: baseline; }
+
+  .sheets { list-style: none; display: grid; gap: 2px; }
+  .sheets a {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-3);
+    align-items: baseline;
+    padding: var(--space-2);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--text);
+  }
+  .sheets a:hover { background: var(--bg-raised); color: var(--text-bright); }
+  .num { font: var(--text-xs) var(--font-mono); color: var(--brand); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: static; }
+  }
+</style>

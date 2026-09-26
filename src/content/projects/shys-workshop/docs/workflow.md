@@ -1,6 +1,9 @@
-# Workflow
-
-How work moves from this machine to the live site. Every command runs in the VS Code terminal (`` Ctrl+` ``).
+---
+title: Workflow
+type: guide
+order: 1
+summary: How work moves from this machine to the live site.
+---
 
 | Place | What it is |
 |---|---|

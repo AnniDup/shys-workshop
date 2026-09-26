@@ -1,0 +1,148 @@
+---
+import { aiLevels } from '../config/taxonomy';
+import type { Project } from '../lib/content';
+import { categoryOf, colourOf, initialsOf, kindLabelOf } from '../lib/project';
+import { url } from '../lib/url';
+import Pill from './Pill.astro';
+import StatusFlag from './StatusFlag.astro';
+import Tag from './Tag.astro';
+import Thumb from './Thumb.astro';
+
+interface Props {
+  project: Project;
+}
+const { project } = Astro.props;
+const d = project.data;
+const category = categoryOf(project);
+const colour = colourOf(project);
+const initials = initialsOf(category?.label ?? d.title);
+
+// Filter attributes, e.g. data-game="terraria" data-kind="map" data-status="development"
+const filterData = {
+  ...(category && { [`data-${category.key}`]: category.value }),
+  'data-kind': d.kind,
+  'data-status': d.status,
+};
+---
+
+<a
+  class="card"
+  href={url(`/${d.domain}/${project.id}`)}
+  {...filterData}
+>
+  <Thumb
+    image={d.thumbnail}
+    fallbackText={initials}
+    colour={colour}
+    ratio="3 / 4"
+    widths={[360, 720]}
+    sizes="180px"
+  >
+    <span class="status"><StatusFlag status={d.status} /></span>
+  </Thumb>
+  <div class="body">
+    <h3 class="title">{d.title}</h3>
+    <p class="summary">{d.summary}</p>
+    <div class="tags">
+      {category && <Pill label={category.label} colour={category.colour} />}
+      <Tag label={kindLabelOf(project)} />
+      {d.version && <Tag label={`v${d.version}`} />}
+      {d.ai.level !== 'none' && <Tag label={`AI ${aiLevels[d.ai.level].label}`} />}
+      {d.draft && <Tag label="Draft" />}
+    </div>
+  </div>
+</a>
+
+<style>
+  .card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    text-decoration: none;
+    color: inherit;
+    background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .card:hover,
+  .card:focus-visible {
+    border-color: var(--brand);
+    transform: translateY(-2px);
+    outline: 0;
+  }
+  /* Corner brackets on hover */
+  .card::before,
+  .card::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--brand-hi);
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .card::before { top: -3px; left: -3px; border-right: 0; border-bottom: 0; }
+  .card::after { bottom: -3px; right: -3px; border-left: 0; border-top: 0; }
+  .card:hover::before,
+  .card:hover::after,
+  .card:focus-visible::before,
+  .card:focus-visible::after { opacity: 1; }
+
+  /* Image fills the left column, however tall the text makes the card. */
+  .card :global(.thumb) {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 240px;
+    border-right: 1px solid var(--line);
+  }
+  /* Fallback initials sit at the top so they clear the status flag. */
+  .card :global(.glyph) {
+    top: 8px;
+    bottom: auto;
+    right: 10px;
+    font-size: 3rem;
+  }
+  .status { position: absolute; left: 8px; bottom: 8px; }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 1;
+    padding: var(--space-4) var(--space-5);
+  }
+  .title {
+    font: 400 var(--text-xl)/1.05 var(--font-display);
+    letter-spacing: var(--tracking-display);
+    color: var(--text-bright);
+  }
+  .summary {
+    color: var(--text-muted);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-top: auto;
+    padding-top: var(--space-1);
+  }
+
+  /* Phones: narrower image column so the text keeps enough room. */
+  @media (max-width: 520px) {
+    .card { grid-template-columns: 120px minmax(0, 1fr); }
+    .card :global(.thumb) { min-height: 160px; }
+    .card :global(.glyph) { font-size: 2.25rem; }
+    .body { padding: var(--space-3); }
+    .title { font-size: var(--text-lg); }
+    .summary { font-size: var(--text-sm); -webkit-line-clamp: 3; }
+  }
+</style>

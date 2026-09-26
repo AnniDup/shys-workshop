@@ -1,0 +1,34 @@
+---
+// A category pill with a coloured dot, used for games and other categories.
+interface Props {
+  label: string;
+  colour: string;
+}
+const { label, colour } = Astro.props;
+---
+
+<span class="pill" style={`--k: ${colour}`}>{label}</span>
+
+<style>
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 500 0.5625rem var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px 2px 5px;
+    border-radius: var(--radius-pill);
+    color: var(--k);
+    border: 1px solid color-mix(in srgb, var(--k) 55%, transparent);
+    background: color-mix(in srgb, var(--k) 9%, transparent);
+    white-space: nowrap;
+  }
+  .pill::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--k);
+  }
+</style>

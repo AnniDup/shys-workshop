@@ -1,0 +1,283 @@
+---
+import type { GetStaticPaths } from 'astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import Base from '../../layouts/Base.astro';
+import { domains, kinds, statuses, type Domain } from '../../config/taxonomy';
+import { getActiveDomains, getProjectsIn } from '../../lib/content';
+
+export const getStaticPaths = (async () => {
+  const active = await getActiveDomains();
+  return [...active].map((domain) => ({ params: { domain } }));
+}) satisfies GetStaticPaths;
+
+const domain = Astro.params.domain as Domain;
+const projects = await getProjectsIn(domain);
+const category = domains[domain].category;
+
+// Filter groups. Only options that have projects are shown.
+const count = (key: string, value: string) =>
+  projects.filter((p) => (p.data as Record<string, unknown>)[key] === value).length;
+
+type Group = {
+  key: string;
+  label: string;
+  options: { value: string; label: string; colour?: string }[];
+};
+
+const groups: Group[] = [
+  // The domain's own category, e.g. Game. Domains without one skip this group.
+  ...(category
+    ? [
+        {
+          key: category.key,
+          label: category.label,
+          options: Object.entries(category.options).map(([value, o]) => ({
+            value,
+            label: o.label,
+            colour: o.colour,
+          })),
+        },
+      ]
+    : []),
+  {
+    key: 'kind',
+    label: 'Kind',
+    options: Object.entries(kinds[domain]).map(([value, label]) => ({ value, label })),
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    options: Object.entries(statuses).map(([value, s]) => ({
+      value,
+      label: s.label,
+      colour: s.colour,
+    })),
+  },
+];
+
+const visibleGroups = groups
+  .map((g) => ({
+    ...g,
+    options: g.options
+      .map((o) => ({ ...o, n: count(g.key, o.value) }))
+      .filter((o) => o.n > 0),
+  }))
+  .filter((g) => g.options.length > 0);
+---
+
+<Base title={domains[domain].label}>
+  <header class="head">
+    <h1>{domains[domain].label}</h1>
+    <p class="label">
+      <span data-shown>{projects.length}</span> of {projects.length} projects
+    </p>
+  </header>
+
+  <div class="layout">
+    <aside aria-label="Filters">
+      {
+        visibleGroups.map((g) => (
+          <fieldset class="group">
+            <legend class="label">{g.label}</legend>
+            {g.options.map((o) => (
+              <button
+                type="button"
+                class="opt"
+                data-group={g.key}
+                data-value={o.value}
+                aria-pressed="false"
+                style={o.colour ? `--k: ${o.colour}` : undefined}
+              >
+                <span class={o.colour ? 'dot' : 'box'} />
+                <span class="name">{o.label}</span>
+                <span class="n">{o.n}</span>
+              </button>
+            ))}
+          </fieldset>
+        ))
+      }
+      <button type="button" class="clear" data-clear hidden>Clear filters</button>
+    </aside>
+
+    <div>
+      <div class="grid" data-grid>
+        {projects.map((p) => <ProjectCard project={p} />)}
+      </div>
+      <p class="empty" data-empty hidden>
+        No projects match these filters. <button type="button" data-clear>Clear filters</button>
+      </p>
+    </div>
+  </div>
+</Base>
+
+<script>
+  // Filters live in the URL (?game=terraria&status=active) so views can be shared.
+  // Within a group, options combine with OR; across groups, with AND.
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-group]')];
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-grid] > *')];
+  const shown = document.querySelector('[data-shown]');
+  const empty = document.querySelector<HTMLElement>('[data-empty]');
+  const clears = [...document.querySelectorAll<HTMLButtonElement>('[data-clear]')];
+
+  function selected(): Map<string, Set<string>> {
+    const params = new URLSearchParams(location.search);
+    const map = new Map<string, Set<string>>();
+    for (const b of buttons) {
+      const g = b.dataset.group!;
+      if (!map.has(g)) {
+        const values = (params.get(g) ?? '').split(',').filter(Boolean);
+        map.set(g, new Set(values));
+      }
+    }
+    return map;
+  }
+
+  function apply(sel: Map<string, Set<string>>) {
+    let visible = 0;
+    for (const card of cards) {
+      const match = [...sel].every(([g, values]) => !values.size || values.has(card.dataset[g] ?? ''));
+      card.hidden = !match;
+      if (match) visible++;
+    }
+    for (const b of buttons) {
+      b.setAttribute('aria-pressed', String(sel.get(b.dataset.group!)?.has(b.dataset.value!)));
+    }
+    const any = [...sel.values()].some((v) => v.size);
+    if (shown) shown.textContent = String(visible);
+    if (empty) empty.hidden = visible > 0;
+    clears.forEach((c) => (c.hidden = !any && c.closest('[data-empty]') === null));
+  }
+
+  function write(sel: Map<string, Set<string>>) {
+    const params = new URLSearchParams();
+    for (const [g, values] of sel) if (values.size) params.set(g, [...values].join(','));
+    const q = params.toString();
+    history.replaceState(null, '', q ? `?${q}` : location.pathname);
+    apply(sel);
+  }
+
+  for (const b of buttons) {
+    b.addEventListener('click', () => {
+      const sel = selected();
+      const set = sel.get(b.dataset.group!)!;
+      const v = b.dataset.value!;
+      set.has(v) ? set.delete(v) : set.add(v);
+      write(sel);
+    });
+  }
+  for (const c of clears) {
+    c.addEventListener('click', () => {
+      const sel = selected();
+      sel.forEach((s) => s.clear());
+      write(sel);
+    });
+  }
+
+  apply(selected());
+</script>
+
+<style>
+  .head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  aside {
+    position: sticky;
+    top: 80px;
+  }
+
+  .group {
+    border: 0;
+    margin-bottom: var(--space-5);
+  }
+  .group legend {
+    width: 100%;
+    color: var(--brand-hi);
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-2);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius);
+    font-size: var(--text-sm);
+    text-align: left;
+    color: var(--text);
+  }
+  .opt:hover { background: var(--bg-raised); }
+  .box {
+    width: 11px;
+    height: 11px;
+    flex: none;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+  }
+  .opt[aria-pressed='true'] .box {
+    background: var(--brand);
+    border-color: var(--brand);
+  }
+  .dot {
+    width: 9px;
+    height: 9px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--k);
+    opacity: 0.55;
+  }
+  .opt[aria-pressed='true'] { background: color-mix(in srgb, var(--k, var(--brand)) 14%, transparent); }
+  .opt[aria-pressed='true'] .dot { opacity: 1; box-shadow: 0 0 0 2px color-mix(in srgb, var(--k) 35%, transparent); }
+  .n {
+    margin-left: auto;
+    font: var(--text-xs) var(--font-mono);
+    color: var(--text-muted);
+  }
+
+  .clear,
+  .empty button {
+    font: 500 var(--text-xs) var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-hi);
+    padding: var(--space-1) var(--space-2);
+  }
+  .clear:hover,
+  .empty button:hover { color: var(--text-bright); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+    gap: var(--space-4);
+  }
+  .grid > :global([hidden]) { display: none; }
+
+  .empty {
+    border: 1px dashed var(--line);
+    padding: var(--space-7) var(--space-5);
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: static; display: flex; flex-wrap: wrap; gap: var(--space-4); }
+    .group { margin: 0; min-width: 160px; }
+  }
+</style>

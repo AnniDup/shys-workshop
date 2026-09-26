@@ -37,10 +37,13 @@
   --err: #dc5f4b;
 
   /* Project status */
-  --status-active: #7db39e;
-  --status-released: #8daecb;
-  --status-resting: #d9a441;
-  --status-shelved: #dc5f4b;
+  --status-concept: #b2a3e1;
+  --status-planning: #d897bb;
+  --status-development: #d9a441;
+  --status-maintained: #7db39e;
+  --status-unmaintained: #8daecb;
+  --status-paused: #979a97;
+  --status-discontinued: #dc5f4b;
 
   /* Category palette: hue-named so they can be reassigned */
   --cat-coral: #e1988e;

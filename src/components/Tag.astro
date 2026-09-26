@@ -1,0 +1,22 @@
+---
+// A plain tag for formats and kinds. Colour is reserved for categories and status.
+interface Props {
+  label: string;
+}
+const { label } = Astro.props;
+---
+
+<span class="tag">{label}</span>
+
+<style>
+  .tag {
+    font: 500 0.5625rem var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line-strong);
+    color: var(--text);
+    white-space: nowrap;
+  }
+</style>
