@@ -51,7 +51,7 @@ git pull
 npm run dev
 ```
 
-- Open http://localhost:4321.
+- Open http://localhost:4321/shys-workshop/.
 - If `package.json` changed since last time, run `npm install` before `npm run dev`.
 
 `npm run dev` keeps that terminal busy. Open a second terminal with the **+** in the terminal panel for Git commands while it runs.
@@ -119,7 +119,7 @@ npm run build
 npm run preview
 ```
 
-Click through the pages at http://localhost:4321, then `Ctrl+C`.
+Click through the pages at http://localhost:4321/shys-workshop/, then `Ctrl+C`.
 
 ### 2. Open, Check and Merge
 

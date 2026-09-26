@@ -1,17 +1,15 @@
 ---
-
+import Base from '../layouts/Base.astro';
+import { site } from '../config/site';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Shy's Workshop</title>
-	</head>
-	<body>
-		<h1>Shy's Workshop</h1>
-	</body>
-</html>
+<Base>
+  <p class="label">Workshop Floor</p>
+  <h1>{site.name}</h1>
+  <p class="lede">{site.description}</p>
+</Base>
+
+<style>
+  h1 { margin: var(--space-2) 0 var(--space-3); }
+  .lede { color: var(--text-muted); max-width: var(--prose-max); }
+</style>

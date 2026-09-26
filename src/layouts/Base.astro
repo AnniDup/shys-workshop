@@ -1,0 +1,170 @@
+---
+import '@fontsource/bebas-neue';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+
+import { site } from '../config/site';
+import { domains, type Domain } from '../config/taxonomy';
+import { getActiveDomains } from '../lib/content';
+import { isCurrent, url } from '../lib/url';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = site.description } = Astro.props;
+const pageTitle = title ? `${title} | ${site.name}` : site.name;
+
+// Only domains with visible projects appear in the nav.
+const active = await getActiveDomains();
+const nav = (Object.keys(domains) as Domain[])
+  .filter((d) => active.has(d))
+  .map((d) => ({ href: `/${d}`, label: domains[d].label }));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="top">
+      <div class="top-in">
+        <a class="stamp" href={url('/')} aria-label={`${site.name} home`}>
+          <span class="stamp-plate">{site.stamp}</span>
+          <span class="stamp-name">{site.name}</span>
+        </a>
+
+        {nav.length > 0 && (
+          <nav aria-label="Main">
+            <ul>
+              {nav.map((item) => (
+                <li>
+                  <a
+                    href={url(item.href)}
+                    aria-current={isCurrent(Astro.url, item.href) ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="titleblock">
+      <dl>
+        <div><dt class="label">Project</dt><dd>{site.name}</dd></div>
+        <div><dt class="label">Drawn by</dt><dd>{site.maker}</dd></div>
+        <div><dt class="label">Sheet</dt><dd>{title ?? 'Index'}</dd></div>
+      </dl>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .skip {
+    position: absolute;
+    left: var(--space-4);
+    top: -100px;
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-raised);
+    border: 1px solid var(--brand);
+    z-index: 100;
+  }
+  .skip:focus { top: var(--space-4); }
+
+  .top {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg-void) 92%, transparent);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-in {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 0 var(--space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    flex-wrap: wrap;
+  }
+
+  .stamp {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    text-decoration: none;
+    color: var(--text-bright);
+  }
+  .stamp-plate {
+    font: 400 1.25rem/1 var(--font-display);
+    letter-spacing: 0.12em;
+    padding: 0.3rem 0.45rem 0.2rem 0.55rem;
+    border: 2px solid var(--brand);
+    color: var(--brand-hi);
+    border-radius: var(--radius);
+  }
+  .stamp-name {
+    font: 400 1.375rem/1 var(--font-display);
+    letter-spacing: var(--tracking-display);
+  }
+
+  nav ul { display: flex; gap: var(--space-1); list-style: none; }
+  nav a {
+    display: block;
+    padding: var(--space-4) var(--space-4) calc(var(--space-4) - 2px);
+    font: 500 var(--text-xs) var(--font-mono);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover { color: var(--text); }
+  nav a[aria-current='page'] { color: var(--brand-hi); border-bottom-color: var(--brand); }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-5) var(--space-8);
+  }
+
+  .titleblock {
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg-void) 92%, transparent);
+  }
+  .titleblock dl {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 0 var(--space-5);
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .titleblock div {
+    padding: var(--space-3) var(--space-5) var(--space-3) 0;
+    margin-right: var(--space-5);
+    border-right: 1px solid var(--line);
+  }
+  .titleblock div:last-child { border-right: 0; }
+  .titleblock dd { color: var(--text); font-size: var(--text-sm); }
+</style>

@@ -1,0 +1,72 @@
+@import './tokens.css';
+
+/* Reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+img, svg, video { display: block; max-width: 100%; height: auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+
+html {
+  background: var(--bg-void);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  font: 400 var(--text-base) / 1.6 var(--font-body);
+  background-color: var(--bg-void);
+  background-image:
+    radial-gradient(900px 500px at 8% -8%, var(--brand-glow), transparent 65%),
+    linear-gradient(var(--grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+  background-size:
+    auto,
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size),
+    var(--grid-size-minor) var(--grid-size-minor),
+    var(--grid-size-minor) var(--grid-size-minor);
+  background-attachment: fixed;
+  overflow-x: clip;
+}
+
+/* Type */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: var(--tracking-display);
+  color: var(--text-bright);
+  line-height: 1.05;
+}
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+
+a { color: var(--brand-hi); text-underline-offset: 3px; }
+a:hover { color: var(--text-bright); }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+::selection { background: var(--brand-dim); color: var(--text-bright); }
+
+/* Utility: small monospace label */
+.label {
+  font: 500 var(--text-xs) var(--font-mono);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Utility: visually hidden but readable by screen readers */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

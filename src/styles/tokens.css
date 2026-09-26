@@ -1,0 +1,87 @@
+/*
+  Design tokens: Autumn Workshop
+  The only file that defines colours, type and spacing.
+  Everything else uses these variables.
+*/
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg-void: #101111;       /* page background */
+  --bg-deep: #151616;       /* inputs, wells */
+  --bg-surface: #1b1c1c;    /* cards, panels */
+  --bg-raised: #232424;     /* hover states, drawers */
+  --line: #323434;          /* borders, major grid */
+  --line-strong: #515554;   /* inactive controls; never text */
+  --grid-major: rgba(232, 234, 228, 0.075);
+  --grid-minor: rgba(232, 234, 228, 0.03);
+
+  /* Text */
+  --text-muted: #979a97;
+  --text: #dadcd7;
+  --text-bright: #f2f2ed;
+
+  /* Brand and interaction */
+  --brand: #91b168;
+  --brand-hi: #bad697;      /* links, active labels */
+  --brand-dim: #4d6034;     /* quiet borders on brand items */
+  --brand-glow: color-mix(in srgb, var(--brand) 10%, transparent);
+  --accent: #d0703e;
+  --accent-hi: #e59a6e;
+  --focus: var(--brand-hi);
+
+  /* Feedback */
+  --ok: #7db39e;
+  --info: #8daecb;
+  --warn: #d9a441;
+  --err: #dc5f4b;
+
+  /* Project status */
+  --status-active: #7db39e;
+  --status-released: #8daecb;
+  --status-resting: #d9a441;
+  --status-shelved: #dc5f4b;
+
+  /* Category palette: hue-named so they can be reassigned */
+  --cat-coral: #e1988e;
+  --cat-orange: #d9a074;
+  --cat-gold: #c6ab6a;
+  --cat-cyan: #62c0ba;
+  --cat-blue: #77b6e1;
+  --cat-violet: #b2a3e1;
+  --cat-magenta: #d897bb;
+
+  /* Type */
+  --font-display: 'Bebas Neue', 'Arial Narrow', Impact, sans-serif;
+  --font-body: 'Inter Variable', Inter, 'Segoe UI', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', Consolas, monospace;
+
+  --text-xs: 0.6875rem;   /* 11px: tags, labels */
+  --text-sm: 0.8125rem;   /* 13px: secondary text */
+  --text-base: 0.9375rem; /* 15px: body */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.75rem;     /* 28px: section headings */
+  --text-2xl: 2.5rem;     /* 40px: page titles */
+  --text-3xl: clamp(2.5rem, 5vw, 3.75rem);
+
+  --tracking-label: 0.14em;
+  --tracking-display: 0.05em;
+
+  /* Spacing (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Shape and layout */
+  --radius: 2px;
+  --radius-pill: 999px;
+  --content-max: 1440px;
+  --prose-max: 68ch;
+  --grid-size: 80px;
+  --grid-size-minor: 20px;
+}
