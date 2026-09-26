@@ -1,3 +1,14 @@
+## 0.10.0 (26 Sep 2026)
+
+- Renamed the Rules kind to Rulebook.
+- Added chapter, locations, NPCs and items sheet types for rulebooks and adventures.
+
+## 0.9.0 (26 Sep 2026)
+
+- Added the Tabletop domain for TTRPG adventures, settings, locations, characters, items and rules.
+- Tabletop projects can link to their setting and rules, and those pages list what uses them.
+- Renamed the Planning status to Design.
+
 ## 0.8.0 (26 Sep 2026)
 
 - Added the home page: readouts, on the bench, activity log, shipped, the queue and domains.

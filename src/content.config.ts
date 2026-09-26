@@ -10,6 +10,7 @@ import {
   linkTypes,
   releasedStatuses,
   statuses,
+  systems,
 } from './config/taxonomy';
 
 /*
@@ -58,7 +59,7 @@ const ai = z
 const projectBase = (image: ImageFn) =>
   z.object({
     title: z.string(),
-    summary: z.string().max(240, 'Keep summaries under 240 characters for cards'),
+    summary: z.string().max(160, 'Keep summaries under 160 characters for cards'),
     status: z.enum(keysOf(statuses)),
     // Current version, e.g. 0.3.0 or 1.2.0-beta
     version: z
@@ -96,6 +97,18 @@ const projects = defineCollection({
         gameVersion: z.string().optional(),
         // Other mods or DLC needed, e.g. [Automatron, Nuka-World]
         requires: z.array(z.string()).default([]),
+      }),
+      projectBase(image).extend({
+        domain: z.literal('tabletop'),
+        kind: z.enum(keysOf(kinds.tabletop)),
+        // The system it was written for, e.g. fate-core
+        system: z.enum(keysOf(systems)),
+        // Other systems it has been adapted to, e.g. [dnd-5e]
+        adaptations: z.array(z.enum(keysOf(systems))).default([]),
+        // The setting project it belongs to, by folder name
+        setting: reference('projects').optional(),
+        // The rules project it uses, by folder name
+        rules: reference('projects').optional(),
       }),
       projectBase(image).extend({
         domain: z.literal('digital'),

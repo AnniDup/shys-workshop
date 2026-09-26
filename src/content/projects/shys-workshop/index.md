@@ -5,7 +5,7 @@ summary: This site. The build, its workflow and its changelog, logged here as it
 domain: digital
 kind: site
 status: development
-version: 0.8.0
+version: 0.10.0
 started: 2026-09-26
 # released: 2026-01-01    # required once maintained or unmaintained
 updated: 2026-09-26

@@ -11,8 +11,17 @@ export const games = {
 } as const;
 export type Game = keyof typeof games;
 
+// Tabletop systems: the category filter within the Tabletop domain.
+export const systems = {
+  'fate-core': { label: 'FATE Core', colour: 'var(--cat-violet)' },
+  pathfinder: { label: 'Pathfinder', colour: 'var(--cat-orange)' },
+  'dnd-5e': { label: 'D&D 5E', colour: 'var(--cat-coral)' },
+} as const;
+export type System = keyof typeof systems;
+
 // Domains: top-level groupings, shown in the nav when they have entries.
 //   games:   content for existing games (mods, maps, adventures)
+//   tabletop: TTRPG adventures, settings, rules and designs
 //   builds:  things built from scratch (apps, own games, tools)
 //   digital: information pieces and experience design, including this site
 // `category` is an optional extra filter a domain can have, like Game for Games.
@@ -23,11 +32,16 @@ type Category = {
 };
 type DomainConfig = { label: string; colour: string; category?: Category };
 
-export const domains: Record<'games' | 'builds' | 'digital', DomainConfig> = {
+export const domains: Record<'games' | 'tabletop' | 'builds' | 'digital', DomainConfig> = {
   games: {
     label: 'Games',
     colour: 'var(--brand)',
     category: { key: 'game', label: 'Game', options: games },
+  },
+  tabletop: {
+    label: 'Tabletop',
+    colour: 'var(--cat-magenta)',
+    category: { key: 'system', label: 'System', options: systems },
   },
   builds: {
     label: 'Builds',
@@ -47,6 +61,15 @@ export const kinds = {
     adventure: 'Adventure',
     map: 'Map',
     challenge: 'Challenge',
+  },
+  tabletop: {
+    adventure: 'Adventure',
+    'short-adventure': 'Short adventure',
+    setting: 'Setting',
+    location: 'Location',
+    character: 'Character',
+    item: 'Item',
+    rules: 'Rulebook',
   },
   builds: {
     app: 'App',
@@ -91,6 +114,10 @@ export const releasedStatuses: Status[] = ['maintained', 'unmaintained'];
 // Doc types: shared across every domain.
 export const docTypes = {
   premise: 'Premise',
+  chapter: 'Chapter',
+  locations: 'Locations',
+  npcs: 'NPCs',
+  items: 'Items',
   gallery: 'Gallery',
   design: 'Design',
   concept: 'Concept',

@@ -1,13 +1,20 @@
 ---
 import type { GetStaticPaths } from 'astro';
-import { render } from 'astro:content';
+import { getEntry, render } from 'astro:content';
 import Breadcrumb from '../../../components/Breadcrumb.astro';
 import Figure from '../../../components/Figure.astro';
 import Pill from '../../../components/Pill.astro';
 import StatusFlag from '../../../components/StatusFlag.astro';
 import Base from '../../../layouts/Base.astro';
-import { aiLevels, docTypes, domains, linkTypes } from '../../../config/taxonomy';
-import { docSlugOf, formatDate, getDocsFor, getProjects, type Project } from '../../../lib/content';
+import { aiLevels, docTypes, domains, linkTypes, systems } from '../../../config/taxonomy';
+import {
+  docSlugOf,
+  formatDate,
+  getConnected,
+  getDocsFor,
+  getProjects,
+  type Project,
+} from '../../../lib/content';
 import { categoryOf, kindLabelOf } from '../../../lib/project';
 import { url } from '../../../lib/url';
 
@@ -28,6 +35,13 @@ const { Content } = await render(project);
 const docs = await getDocsFor(project.id);
 const category = categoryOf(project);
 const [lead, ...rest] = d.images;
+
+// Tabletop links: the setting and rules this project uses, and projects that use this one.
+const visible = (p?: Project) => p && (import.meta.env.DEV || !p.data.draft) ? p : undefined;
+const setting = d.domain === 'tabletop' && d.setting ? visible(await getEntry(d.setting)) : undefined;
+const rules = d.domain === 'tabletop' && d.rules ? visible(await getEntry(d.rules)) : undefined;
+const connected = await getConnected(project.id);
+const projectLink = (p: Project) => url(`/${p.data.domain}/${p.id}`);
 ---
 
 <Base title={d.title} description={d.summary}>
@@ -82,9 +96,28 @@ const [lead, ...rest] = d.images;
         {d.domain === 'games' && d.gameVersion && <div><dt class="label">Game version</dt><dd>{d.gameVersion}</dd></div>}
         {d.domain === 'games' && d.requires.length > 0 && <div><dt class="label">Requires</dt><dd>{d.requires.join(', ')}</dd></div>}
         {d.domain === 'builds' && d.engine && <div><dt class="label">Engine</dt><dd>{d.engine}</dd></div>}
-        {d.domain !== 'games' && d.platforms.length > 0 && <div><dt class="label">Platforms</dt><dd>{d.platforms.join(', ')}</dd></div>}
-        {d.domain !== 'games' && d.stack.length > 0 && <div><dt class="label">Stack</dt><dd>{d.stack.join(', ')}</dd></div>}
+        {(d.domain === 'builds' || d.domain === 'digital') && d.platforms.length > 0 && <div><dt class="label">Platforms</dt><dd>{d.platforms.join(', ')}</dd></div>}
+        {(d.domain === 'builds' || d.domain === 'digital') && d.stack.length > 0 && <div><dt class="label">Stack</dt><dd>{d.stack.join(', ')}</dd></div>}
+        {d.domain === 'tabletop' && d.adaptations.length > 0 && <div><dt class="label">Adapted for</dt><dd>{d.adaptations.map((s) => systems[s].label).join(', ')}</dd></div>}
+        {setting && <div><dt class="label">Setting</dt><dd><a href={projectLink(setting)}>{setting.data.title}</a></dd></div>}
+        {rules && <div><dt class="label">Rules</dt><dd><a href={projectLink(rules)}>{rules.data.title}</a></dd></div>}
       </dl>
+
+      {
+        connected.length > 0 && (
+          <section class="panel">
+            <h2 class="label">{d.domain === 'tabletop' && d.kind === 'rules' ? 'Uses These Rules' : 'In This Setting'}</h2>
+            <ul class="connected">
+              {connected.map((p) => (
+                <li>
+                  <a href={projectLink(p)}>{p.data.title}</a>
+                  <span class="label">{p.data.domain === 'tabletop' ? kindLabelOf(p) : ''}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
 
       <section class="panel ai">
         <h2 class="label">AI Usage</h2>
@@ -182,6 +215,9 @@ const [lead, ...rest] = d.images;
   .ai-desc, .ai-notes { color: var(--text-muted); font-size: var(--text-sm); }
   .ai-models { font-size: var(--text-sm); }
   .ai-models .label { margin-right: var(--space-2); }
+
+  .connected { list-style: none; display: grid; gap: var(--space-2); }
+  .connected li { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; }
 
   .links { list-style: none; display: grid; gap: var(--space-2); }
   .links li { display: grid; grid-template-columns: 80px 1fr; gap: var(--space-3); align-items: baseline; }

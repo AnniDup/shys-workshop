@@ -23,6 +23,22 @@ export async function getProjects(): Promise<Project[]> {
     );
   }
 
+  // Tabletop links must point at a real project of the right kind.
+  const everything = await getCollection('projects');
+  const kindOf = new Map(everything.map((p) => [p.id, p.data.kind]));
+  const problems: string[] = [];
+  for (const p of all) {
+    if (p.data.domain !== 'tabletop') continue;
+    for (const [field, expected] of [['setting', 'setting'], ['rules', 'rules']] as const) {
+      const target = p.data[field]?.id;
+      if (!target) continue;
+      if (!kindOf.has(target)) problems.push(`${p.id} → ${field}: no project called "${target}"`);
+      else if (kindOf.get(target) !== expected)
+        problems.push(`${p.id} → ${field}: "${target}" is not a ${expected} project`);
+    }
+  }
+  if (problems.length) throw new Error(`Broken tabletop links:\n  ${problems.join('\n  ')}`);
+
   return all.sort((a, b) => b.data.updated.getTime() - a.data.updated.getTime());
 }
 
@@ -78,4 +94,14 @@ export const formatDate = (d: Date) =>
 export async function getNotes(): Promise<Note[]> {
   const notes = await getCollection('notes', visible);
   return notes.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+}
+
+// Tabletop projects that point at this one as their setting or rules.
+export async function getConnected(projectId: string): Promise<Project[]> {
+  const projects = await getProjects();
+  return projects.filter(
+    (p) =>
+      p.data.domain === 'tabletop' &&
+      (p.data.setting?.id === projectId || p.data.rules?.id === projectId),
+  );
 }
