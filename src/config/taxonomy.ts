@@ -126,14 +126,29 @@ export const docTypes = {
 export type DocType = keyof typeof docTypes;
 
 // Adventure sections: folders inside a Tabletop project, each file its own entry.
+// Key order is display order.
 export const sections = {
   arcs: { label: 'Arcs', single: 'Arc' },
+  pcs: { label: 'Player Characters', single: 'Player character' },
   npcs: { label: 'NPCs', single: 'NPC' },
   locations: { label: 'Locations', single: 'Location' },
   items: { label: 'Items', single: 'Item' },
+  handouts: { label: 'Handouts', single: 'Handout' },
 } as const;
 export type Section = keyof typeof sections;
 export type PartSection = Exclude<Section, 'arcs'>;
+
+// Every section except arcs holds "parts": one file per entry.
+export const partSections: PartSection[] = ['pcs', 'npcs', 'locations', 'items', 'handouts'];
+// The parts an arc can list as featured.
+export const arcLinkedSections = ['npcs', 'locations', 'items', 'handouts'] as const;
+export type ArcLinkedSection = (typeof arcLinkedSections)[number];
+
+// Handouts: what each is for.
+export const handoutPurposes = {
+  setup: { label: 'Setup', description: 'Given to players to start or run the adventure' },
+  example: { label: 'Example', description: 'Samples to show GMs what they can make' },
+} as const;
 
 // AI usage: how much AI was involved in making the project.
 export const aiLevels = {

@@ -6,7 +6,15 @@ import Figure from '../../../components/Figure.astro';
 import Pill from '../../../components/Pill.astro';
 import StatusFlag from '../../../components/StatusFlag.astro';
 import Base from '../../../layouts/Base.astro';
-import { aiLevels, docTypes, domains, linkTypes, sections, systems } from '../../../config/taxonomy';
+import {
+  aiLevels,
+  docTypes,
+  domains,
+  linkTypes,
+  partSections as allPartSections,
+  sections,
+  systems,
+} from '../../../config/taxonomy';
 import { arcSlugOf, getAdventure, hasAdventure } from '../../../lib/adventure';
 import {
   docSlugOf,
@@ -46,7 +54,7 @@ const projectLink = (p: Project) => url(`/${p.data.domain}/${p.id}`);
 
 // Adventure contents: arcs and the NPC, location and item sections.
 const adventure = await getAdventure(project.id);
-const partSections = (['npcs', 'locations', 'items'] as const)
+const partSections = allPartSections
   .map((s) => ({ key: s, label: sections[s].label, count: adventure[s].length }))
   .filter((s) => s.count > 0);
 ---

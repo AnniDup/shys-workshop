@@ -10,6 +10,7 @@ import {
   linkTypes,
   releasedStatuses,
   statuses,
+  handoutPurposes,
   systems,
 } from './config/taxonomy';
 
@@ -183,11 +184,11 @@ const changelogs = defineCollection({
   schema: z.object({}),
 });
 
-// Adventure parts: one file per NPC, location or item, inside a Tabletop project.
+// Adventure parts: one file per player character, NPC, location, item or handout.
 //   <project>/npcs/captain-salt.md -> id "<project>/npcs/captain-salt"
 const parts = defineCollection({
   loader: glob({
-    pattern: '*/{npcs,locations,items}/*.md',
+    pattern: '*/{pcs,npcs,locations,items,handouts}/*.md',
     base: './src/content/projects',
     generateId: ({ entry }) => entry.replace(/\.md$/, ''),
   }),
@@ -199,6 +200,10 @@ const parts = defineCollection({
       brief: z.boolean(),
       order: z.number().default(0),
       images: z.array(figure(image)).default([]),
+      // Handouts only: setup (for players) or example (for GMs). Required on handouts.
+      purpose: z.enum(keysOf(handoutPurposes)).optional(),
+      // Optional downloadable file in public/, e.g. /downloads/map.pdf
+      download: z.string().startsWith('/', 'Start with /, e.g. /downloads/map.pdf').optional(),
       draft: z.boolean().default(false),
     }),
 });
@@ -218,10 +223,11 @@ const arcs = defineCollection({
     title: z.string(),
     order: z.number(),
     summary: z.string().optional(),
-    // File names (without .md) of the NPCs, locations and items in this arc
+    // File names (without .md) of the NPCs, locations, items and handouts in this arc
     npcs: z.array(z.string()).default([]),
     locations: z.array(z.string()).default([]),
     items: z.array(z.string()).default([]),
+    handouts: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
   }),
 });

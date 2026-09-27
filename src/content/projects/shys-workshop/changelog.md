@@ -1,3 +1,9 @@
+## 0.12.0 (26 Sep 2026)
+
+- Added pre-designed player characters to adventures.
+- Added handouts, grouped as setup handouts for players and example handouts for GMs, with optional downloads.
+- Arcs can list the handouts they use.
+
 ## 0.11.0 (26 Sep 2026)
 
 - Adventures now have arcs, NPCs, locations and items, one file each.

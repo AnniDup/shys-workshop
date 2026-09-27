@@ -5,6 +5,7 @@ summary: The party arrives and is drawn into the first problem.
 npcs: [the-patron, dock-guard]
 locations: [harbour-town, old-lighthouse]
 items: [sealed-letter]
+handouts: [harbour-map]
 ---
 
 Opening notes for the arc: the situation when the party arrives, and what the GM should set up.

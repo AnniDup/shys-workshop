@@ -6,6 +6,7 @@ order: 1                  # position in the adventure
 npcs: []                  # e.g. [captain-salt, harbourmaster]
 locations: []             # e.g. [port-marrow]
 items: []                 # e.g. [tide-compass]
+handouts: []              # e.g. [harbour-map]
 draft: true
 ---
 

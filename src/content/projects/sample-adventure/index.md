@@ -22,4 +22,4 @@ system: fate-core
 
 Overview of the adventure: what it's about, how long it runs, and who it suits.
 
-This sample shows the structure: two arcs with scenes, NPCs and locations with full pages and brief entries, and items.
+This sample shows the structure: two arcs with scenes, pre-designed player characters, NPCs and locations with full pages and brief entries, items, and handouts.

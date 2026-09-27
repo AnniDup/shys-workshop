@@ -4,7 +4,13 @@ import { render } from 'astro:content';
 import Breadcrumb from '../../../../components/Breadcrumb.astro';
 import SheetNav from '../../../../components/SheetNav.astro';
 import Base from '../../../../layouts/Base.astro';
-import { domains, sections, type Section } from '../../../../config/taxonomy';
+import {
+  domains,
+  handoutPurposes,
+  sections,
+  type PartSection,
+  type Section,
+} from '../../../../config/taxonomy';
 import { arcSlugOf, getAdventure, partSlugOf } from '../../../../lib/adventure';
 import { getDocsFor, getProjects } from '../../../../lib/content';
 import { url } from '../../../../lib/url';
@@ -40,14 +46,29 @@ const entries = await Promise.all(
         marker: `A${i + 1}`,
         Content: undefined,
       }))
-    : adventure[section as 'npcs' | 'locations' | 'items'].map(async (p) => ({
+    : adventure[section as PartSection].map(async (p) => ({
         title: p.data.title,
         summary: p.data.summary,
         href: p.data.brief ? undefined : url(`${base}/${section}/${partSlugOf(p)}`),
         marker: undefined,
         Content: p.data.brief ? (await render(p)).Content : undefined,
+        purpose: p.data.purpose,
+        download: p.data.download ? url(p.data.download) : undefined,
       })),
 );
+
+// Handouts are grouped by purpose; every other section is one group.
+type Entry = (typeof entries)[number];
+const groups: { heading?: string; note?: string; entries: Entry[] }[] =
+  section === 'handouts'
+    ? (Object.keys(handoutPurposes) as (keyof typeof handoutPurposes)[])
+        .map((key) => ({
+          heading: handoutPurposes[key].label,
+          note: handoutPurposes[key].description,
+          entries: entries.filter((e) => 'purpose' in e && e.purpose === key),
+        }))
+        .filter((g) => g.entries.length > 0)
+    : [{ entries }];
 ---
 
 <Base title={`${label} | ${project.data.title}`}>
@@ -67,9 +88,18 @@ const entries = await Promise.all(
   <div class="layout">
     <SheetNav project={project} docs={docs} current={section} />
 
+    <div class="groups">
+    {groups.map((group) => (
+    <section>
+    {group.heading && (
+      <div class="group-head">
+        <h2 class="label">{group.heading}</h2>
+        {group.note && <span class="label note">{group.note}</span>}
+      </div>
+    )}
     <ol class="entries">
       {
-        entries.map((e) => (
+        group.entries.map((e) => (
           <li class:list={['entry', { brief: !!e.Content }]}>
             {e.href ? (
               <a class="link" href={e.href}>
@@ -89,12 +119,18 @@ const entries = await Promise.all(
                     <e.Content />
                   </div>
                 )}
+                {'download' in e && e.download && (
+                  <a class="dl" href={e.download} download>Download</a>
+                )}
               </div>
             )}
           </li>
         ))
       }
     </ol>
+    </section>
+    ))}
+    </div>
   </div>
 </Base>
 
@@ -114,7 +150,19 @@ const entries = await Promise.all(
     align-items: start;
   }
 
-  .entries { list-style: none; display: grid; gap: var(--space-3); max-width: 860px; }
+  .groups { display: grid; gap: var(--space-6); max-width: 860px; }
+  .group-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
+    border-bottom: 1px solid var(--line);
+  }
+  .group-head h2 { color: var(--brand-hi); letter-spacing: var(--tracking-label); }
+  .note { text-transform: none; letter-spacing: 0.02em; }
+  .dl { justify-self: start; font-size: var(--text-sm); }
+  .entries { list-style: none; display: grid; gap: var(--space-3); }
   .entry {
     background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
     border: 1px solid var(--line);

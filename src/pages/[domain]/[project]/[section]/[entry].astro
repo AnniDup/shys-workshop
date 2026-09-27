@@ -5,7 +5,14 @@ import Breadcrumb from '../../../../components/Breadcrumb.astro';
 import Figure from '../../../../components/Figure.astro';
 import SheetNav from '../../../../components/SheetNav.astro';
 import Base from '../../../../layouts/Base.astro';
-import { domains, sections, type PartSection } from '../../../../config/taxonomy';
+import {
+  arcLinkedSections,
+  domains,
+  handoutPurposes,
+  partSections,
+  sections,
+  type PartSection,
+} from '../../../../config/taxonomy';
 import {
   arcSlugOf,
   arcsFeaturing,
@@ -30,7 +37,7 @@ export const getStaticPaths = (async () => {
         props: { project, docs, arc, part: undefined },
       });
     }
-    for (const section of ['npcs', 'locations', 'items'] as PartSection[]) {
+    for (const section of partSections) {
       for (const part of adventure[section].filter((p) => !p.data.brief)) {
         paths.push({
           params: { ...params, section, entry: partSlugOf(part) },
@@ -69,8 +76,8 @@ const prevArc = arc ? adventure.arcs[arcIndex - 1] : undefined;
 const nextArc = arc ? adventure.arcs[arcIndex + 1] : undefined;
 const scenes = headings.filter((h) => h.depth === 2);
 const featured = arc
-  ? (['npcs', 'locations', 'items'] as PartSection[])
-      .map((s) => ({ section: s, slugs: arc.data[s] }))
+  ? arcLinkedSections
+      .map((s) => ({ section: s as PartSection, slugs: arc.data[s] }))
       .filter((g) => g.slugs.length > 0)
   : [];
 
@@ -90,7 +97,11 @@ const appearsIn = part ? arcsFeaturing(adventure, part) : [];
 
   <header class="head">
     <p class="label">
-      {arc ? `Arc ${arcIndex + 1} of ${adventure.arcs.length}` : sections[section].single}
+      {arc
+        ? `Arc ${arcIndex + 1} of ${adventure.arcs.length}`
+        : part?.data.purpose
+          ? `${handoutPurposes[part.data.purpose].label} handout`
+          : sections[section].single}
     </p>
     <h1>{entry.data.title}</h1>
     {entry.data.summary && <p class="summary">{entry.data.summary}</p>}
@@ -126,7 +137,7 @@ const appearsIn = part ? arcsFeaturing(adventure, part) : [];
                     <div>
                       <dt class="label">{sections[g.section].label}</dt>
                       <dd>
-                        {g.slugs.map((slug) => (
+                        {g.slugs.map((slug: string) => (
                           <a href={partHref(g.section, slug)}>{partTitle(g.section, slug)}</a>
                         ))}
                       </dd>
@@ -138,6 +149,13 @@ const appearsIn = part ? arcsFeaturing(adventure, part) : [];
           </div>
         )
       }
+
+      {part?.data.download && (
+        <a class="download" href={url(part.data.download)} download>
+          <span class="label">Download</span>
+          {part.data.download.split('/').pop()}
+        </a>
+      )}
 
       {part && part.data.images.length > 0 && (
         <div class="images">
@@ -236,6 +254,21 @@ const appearsIn = part ? arcsFeaturing(adventure, part) : [];
 
   .featured { display: grid; gap: var(--space-3); }
   .featured dd { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); margin-top: var(--space-1); }
+
+  .download {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--brand);
+    border-radius: var(--radius);
+    background: var(--brand-glow);
+    color: var(--brand-hi);
+    text-decoration: none;
+    font-size: var(--text-sm);
+  }
+  .download:hover { color: var(--text-bright); }
 
   .images {
     display: grid;

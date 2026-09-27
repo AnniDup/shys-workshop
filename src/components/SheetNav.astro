@@ -1,5 +1,5 @@
 ---
-import { sections, type PartSection } from '../config/taxonomy';
+import { partSections as allPartSections, sections } from '../config/taxonomy';
 import { arcSlugOf, getAdventure } from '../lib/adventure';
 import type { Doc, Project } from '../lib/content';
 import { docSlugOf } from '../lib/content';
@@ -21,7 +21,7 @@ const sheets = [
   { slug: 'changelog', title: 'Changelog' },
 ];
 
-const partSections = (['npcs', 'locations', 'items'] as PartSection[])
+const partSections = allPartSections
   .map((s) => ({ key: s, label: sections[s].label, count: adventure[s].length }))
   .filter((s) => s.count > 0);
 
